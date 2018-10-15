@@ -15,7 +15,7 @@ func sexyPrint(label string, a interface{}) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Print("DEBUG ", label, ":\n", string(j))
+	fmt.Print("DEBUG ", label, "\n", string(j), "\n")
 }
 
 func main() {
@@ -55,5 +55,5 @@ func vsList(f5Client *f5.Client) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	sexyPrint("vs SelfIP List:", vsConfigList)
+	sexyPrint("ltm virtual List:", vsConfigList)
 }
