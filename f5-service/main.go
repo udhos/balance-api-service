@@ -1,59 +1,92 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
+	"io"
 	"log"
-
-	"github.com/e-XpertSolutions/f5-rest-client/f5"
-	"github.com/e-XpertSolutions/f5-rest-client/f5/ltm"
-	"github.com/e-XpertSolutions/f5-rest-client/f5/net"
+	"net/http"
+	"os"
+	"runtime"
 )
 
-func sexyPrint(label string, a interface{}) {
-	j, err := json.MarshalIndent(a, "", "   ")
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Print("DEBUG ", label, "\n", string(j), "\n")
-}
+const (
+	version = "0.0"
+)
 
 func main() {
 
-	f5Host := "https://10.255.255.120"
+	me := os.Args[0]
 
-	// 1) Basic Authentication
-	f5Client, err := f5.NewBasicClient(f5Host, "admin", "admin")
+	log.Printf("%s %s runtime %s GOMAXPROCS=%d", me, version, runtime.Version(), runtime.GOMAXPROCS(0))
 
-	// 2) Token Based Authentication
-	// f5Client, err := f5.NewTokenClient(f5Host, "admin", "admin", "tmos", true)
-
-	if err != nil {
-		log.Fatal(err)
+	addr := os.Getenv("LISTEN")
+	if addr == "" {
+		addr = ":8080"
 	}
-	f5Client.DisableCertCheck()
 
-	netList(f5Client)
+	register("/", func(w http.ResponseWriter, r *http.Request) { handlerRoot(w, r, "/") })
+	register("/v1/rule", func(w http.ResponseWriter, r *http.Request) { handlerRule(w, r, "/v1/rule") })
+	register("/v1/rule/", func(w http.ResponseWriter, r *http.Request) { handlerRule(w, r, "/v1/rule/") })
 
-	vsList(f5Client)
+	log.Printf("serving HTTP on TCP %s LISTEN=[%s]", addr, os.Getenv("LISTEN"))
+
+	if err := listenAndServe(addr, nil, true); err != nil {
+		log.Fatalf("listenAndServe: %s: %v", addr, err)
+	}
 }
 
-func netList(f5Client *f5.Client) {
-	netClient := net.New(*f5Client) // client for net
-	self, err := netClient.Self().ListAll()
-	if err != nil {
-		log.Fatal(err)
-	}
-	sexyPrint("net SelfIP List:", self)
+func listenAndServe(addr string, handler http.Handler, keepalive bool) error {
+	server := &http.Server{Addr: addr, Handler: handler}
+	server.SetKeepAlivesEnabled(keepalive)
+	return server.ListenAndServe()
 }
 
-func vsList(f5Client *f5.Client) {
-	ltmClient := ltm.New(*f5Client) // client for ltm api
+type handlerFunc func(w http.ResponseWriter, r *http.Request)
 
-	// query the /ltm/virtual API
-	vsConfigList, err := ltmClient.Virtual().ListAll()
-	if err != nil {
-		log.Fatal(err)
+func register(path string, handler handlerFunc) {
+	log.Printf("registering path: [%s]", path)
+	http.HandleFunc(path, handler)
+}
+
+func handlerRoot(w http.ResponseWriter, r *http.Request, path string) {
+
+	if r.URL.Path != path {
+		sendNotFound("handlerRoot", w, r)
+		return
 	}
-	sexyPrint("ltm virtual List:", vsConfigList)
+
+	msg := fmt.Sprintf("handlerRoot: method=%s url=%s from=%s", r.Method, r.URL.Path, r.RemoteAddr)
+	log.Print(msg)
+
+	nothing := fmt.Sprintf("nothing to see here: [%s]", r.URL.Path)
+
+	io.WriteString(w, nothing+"\n")
+}
+
+func handlerRule(w http.ResponseWriter, r *http.Request, path string) {
+
+	if r.URL.Path != path {
+		sendNotFound("handlerRule", w, r)
+		return
+	}
+
+	msg := fmt.Sprintf("handlerHello: method=%s url=%s from=%s", r.Method, r.URL.Path, r.RemoteAddr)
+	log.Print(msg)
+
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	hello := "hello rule api"
+
+	io.WriteString(w, hello+"\n")
+}
+
+func sendNotFound(label string, w http.ResponseWriter, r *http.Request) {
+	msg := fmt.Sprintf("%s: method=%s url=%s from=%s - PATH NOT FOUND", label, r.Method, r.URL.Path, r.RemoteAddr)
+	log.Print(msg)
+
+	notFound := fmt.Sprintf("path not found: [%s]", r.URL.Path)
+
+	w.WriteHeader(http.StatusNotFound)
+
+	io.WriteString(w, notFound+"\n")
 }
