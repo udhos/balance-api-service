@@ -34,7 +34,6 @@ func main() {
 	f5Client.DisableCertCheck()
 
 	netList(f5Client)
-
 	vsList(f5Client)
 }
 
@@ -55,5 +54,14 @@ func vsList(f5Client *f5.Client) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	sexyPrint("ltm virtual List:", vsConfigList)
+	sexyPrint("vsList ltm virtual List:", vsConfigList)
+
+	fmt.Print("vsList ltm pool members list...\n")
+
+	poolMembers := ltmClient.PoolMembers()
+	list, errMembersList := poolMembers.ListAll()
+	if errMembersList != nil {
+		log.Fatal(errMembersList)
+	}
+	sexyPrint("vsList ltm pool members list:", list)
 }
