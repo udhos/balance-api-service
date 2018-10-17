@@ -99,7 +99,7 @@ func handlerNodeF5(w http.ResponseWriter, r *http.Request, path string) {
 
 	suffix := strings.TrimPrefix(r.URL.Path, path)
 
-	msg := fmt.Sprintf("handlerNodeF5: method=%s url=%s from=%s suffix=[%s]", r.Method, r.URL.Path, r.RemoteAddr, suffix)
+	msg := fmt.Sprintf("handlerNodeF5: method=%s url=%s from=%s suffix=[%s] authUser=[%s]", r.Method, r.URL.Path, r.RemoteAddr, suffix, username)
 	log.Print(msg)
 
 	fields := strings.FieldsFunc(suffix, func(r rune) bool { return r == '/' })
@@ -167,7 +167,27 @@ func nodeF5RuleGet(w http.ResponseWriter, r *http.Request, username, password st
 		return
 	}
 
-	writeStr("nodeF5RuleGet", w, fmt.Sprintf("vs: %v\nmembers:%v\n", vsConfigList, members))
+	node := ltmClient.Node()
+	nodes, errNodesList := node.ListAll()
+	if errNodesList != nil {
+		log.Printf("nodeF5RuleGet: method=%s url=%s from=%s nodes list: %v", r.Method, r.URL.Path, r.RemoteAddr, errNodesList)
+		http.Error(w, host+" bad gateway - nodes list", http.StatusBadGateway) // 502
+		return
+	}
+
+	for _, v := range vsConfigList.Items {
+		log.Printf("virtual server: user=%s virtual=%s destination=%s pool=%s partition=%s", username, v.Name, v.Destination, v.Pool, v.Partition)
+	}
+
+	for _, m := range members.Items {
+		log.Printf("pool member: user=%s pool=%s partition=%s", username, m.Name, m.Partition)
+	}
+
+	for _, n := range nodes.Items {
+		log.Printf("node: user=%s name=%s address=%s partition=%s session=%s state=%s", username, n.Name, n.Address, n.Partition, n.Session, n.State)
+	}
+
+	writeStr("nodeF5RuleGet", w, fmt.Sprintf("vs: %v\nmembers: %v\nnodes: %v\n", vsConfigList, members, nodes))
 }
 
 func writeStr(caller string, w http.ResponseWriter, s string) {
