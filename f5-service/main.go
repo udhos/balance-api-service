@@ -187,7 +187,7 @@ func nodeF5RuleGet(w http.ResponseWriter, r *http.Request, username, password st
 		log.Printf("node: user=%s name=%s address=%s partition=%s session=%s state=%s", username, n.Name, n.Address, n.Partition, n.Session, n.State)
 	}
 
-	writeStr("nodeF5RuleGet", w, fmt.Sprintf("vs: %v\nmembers: %v\nnodes: %v\n", vsConfigList, members, nodes))
+	writeStr("nodeF5RuleGet", w, fmt.Sprintf("vs:\n%v\nmembers:\n%v\nnodes:\n%v\n", vsConfigList, members, nodes))
 }
 
 func writeStr(caller string, w http.ResponseWriter, s string) {
