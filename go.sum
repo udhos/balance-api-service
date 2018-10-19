@@ -1,2 +1,4 @@
 github.com/e-XpertSolutions/f5-rest-client v0.0.0 h1:zifJKOeyv9xXK6O6gWVLnh0QdgF4J65+ewvmbSZKyWc=
 github.com/e-XpertSolutions/f5-rest-client v0.0.0/go.mod h1:1S+s0X+f/OMQPRS4V9KqXpHxqoKROe45xHN1LUhoQxA=
+github.com/e-XpertSolutions/f5-rest-client v0.0.1-0.20180601080712-d7a337bfdf14 h1:AvYTsx4k9B8S3wm7iK8dQsIwUB87i3KLABF+72It/OY=
+github.com/e-XpertSolutions/f5-rest-client v0.0.1-0.20180601080712-d7a337bfdf14/go.mod h1:1S+s0X+f/OMQPRS4V9KqXpHxqoKROe45xHN1LUhoQxA=

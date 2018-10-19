@@ -38,7 +38,7 @@ func main() {
 }
 
 func netList(f5Client *f5.Client) {
-	netClient := net.New(*f5Client) // client for net
+	netClient := net.New(f5Client) // client for net
 	self, err := netClient.Self().ListAll()
 	if err != nil {
 		log.Fatal(err)
@@ -47,7 +47,7 @@ func netList(f5Client *f5.Client) {
 }
 
 func vsList(f5Client *f5.Client) {
-	ltmClient := ltm.New(*f5Client) // client for ltm api
+	ltmClient := ltm.New(f5Client) // client for ltm api
 
 	// query the /ltm/virtual API
 	vsConfigList, err := ltmClient.Virtual().ListAll()
@@ -59,7 +59,7 @@ func vsList(f5Client *f5.Client) {
 	fmt.Print("vsList ltm pool members list...\n")
 
 	poolMembers := ltmClient.PoolMembers()
-	list, errMembersList := poolMembers.ListAll()
+	list, errMembersList := poolMembers.ListAll("")
 	if errMembersList != nil {
 		log.Fatal(errMembersList)
 	}

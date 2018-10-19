@@ -150,7 +150,7 @@ func nodeF5RuleGet(w http.ResponseWriter, r *http.Request, username, password st
 
 	f5Client.DisableCertCheck()
 
-	ltmClient := ltm.New(*f5Client)
+	ltmClient := ltm.New(f5Client)
 
 	vsConfigList, errVirtList := ltmClient.Virtual().ListAll()
 	if errVirtList != nil {
@@ -159,11 +159,21 @@ func nodeF5RuleGet(w http.ResponseWriter, r *http.Request, username, password st
 		return
 	}
 
-	poolMembers := ltmClient.PoolMembers()
-	members, errMembersList := poolMembers.ListAll()
-	if errMembersList != nil {
-		log.Printf("nodeF5RuleGet: method=%s url=%s from=%s pool members list: %v", r.Method, r.URL.Path, r.RemoteAddr, errMembersList)
-		http.Error(w, host+" bad gateway - pool members list", http.StatusBadGateway) // 502
+	/*
+		poolMembers := ltmClient.PoolMembers()
+		members, errMembersList := poolMembers.ListAll()
+		if errMembersList != nil {
+			log.Printf("nodeF5RuleGet: method=%s url=%s from=%s pool members list: %v", r.Method, r.URL.Path, r.RemoteAddr, errMembersList)
+			http.Error(w, host+" bad gateway - pool members list", http.StatusBadGateway) // 502
+			return
+		}
+	*/
+
+	poolClient := ltmClient.Pool()
+	poolList, errPoolList := poolClient.ListAll()
+	if errPoolList != nil {
+		log.Printf("nodeF5RuleGet: method=%s url=%s from=%s pool list: %v", r.Method, r.URL.Path, r.RemoteAddr, errPoolList)
+		http.Error(w, host+" bad gateway - pool list", http.StatusBadGateway) // 502
 		return
 	}
 
@@ -179,15 +189,24 @@ func nodeF5RuleGet(w http.ResponseWriter, r *http.Request, username, password st
 		log.Printf("virtual server: user=%s virtual=%s destination=%s pool=%s partition=%s", username, v.Name, v.Destination, v.Pool, v.Partition)
 	}
 
-	for _, m := range members.Items {
-		log.Printf("pool member: user=%s pool=%s partition=%s", username, m.Name, m.Partition)
+	/*
+		for _, m := range members.Items {
+			log.Printf("pool member: user=%s pool=%s partition=%s", username, m.Name, m.Partition)
+		}
+	*/
+
+	for _, p := range poolList.Items {
+		log.Printf("pool: user=%s name=%s members=%s", username, p.Name, p.Members)
 	}
 
-	for _, n := range nodes.Items {
-		log.Printf("node: user=%s name=%s address=%s partition=%s session=%s state=%s", username, n.Name, n.Address, n.Partition, n.Session, n.State)
-	}
+	/*
+		for _, n := range nodes.Items {
+			log.Printf("node: user=%s name=%s address=%s partition=%s session=%s state=%s", username, n.Name, n.Address, n.Partition, n.Session, n.State)
+		}
+	*/
 
-	writeStr("nodeF5RuleGet", w, fmt.Sprintf("vs:\n%v\nmembers:\n%v\nnodes:\n%v\n", vsConfigList, members, nodes))
+	//writeStr("nodeF5RuleGet", w, fmt.Sprintf("vs:\n%v\nmembers:\n%v\nnodes:\n%v\n", vsConfigList, members, nodes))
+	writeStr("nodeF5RuleGet", w, fmt.Sprintf("vs:\n%v\nnodes:\n%v\n", vsConfigList, nodes))
 }
 
 func writeStr(caller string, w http.ResponseWriter, s string) {
