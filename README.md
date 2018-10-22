@@ -2,6 +2,10 @@
 
 # Recipe
 
+    curl -k -u admin:a10 http://192.168.56.20:8080/v1/at/node/10.255.255.6/rule
+
+# Recipe forward
+
     curl -sku admin:admin https://10.255.255.120/mgmt/tm/ltm/virtual/ | jq | less
     curl -sku admin:admin https://10.255.255.120/mgmt/tm/ltm/pool/ | jq | less
     curl -sku admin:admin https://10.255.255.120/mgmt/tm/ltm/node/ | jq | less
