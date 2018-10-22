@@ -64,7 +64,11 @@ func handlerNodeA10(w http.ResponseWriter, r *http.Request, path string) {
 
 // https://github.com/a10networks/tps-scripts/blob/master/axapi_curl_example.txt
 //
+// V3:
 // curl -k -X POST -H 'content-type: application/json' -d '{"credentials": {"username": "admin", "password": "a10"}}' 'https://192.168.199.152/axapi/v3/auth'
+//
+// V2:
+// https://10.255.255.6/services/rest/V2/?method=authenticate&username=admin&password=a10&format=json
 
 func nodeA10RuleGet(w http.ResponseWriter, r *http.Request, username, password string, fields []string) {
 
