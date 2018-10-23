@@ -41,13 +41,7 @@ func handlerNodeA10v2(w http.ResponseWriter, r *http.Request, path string) {
 		http.Error(w, "not authorized", http.StatusUnauthorized) // 401
 		return
 	}
-	var pass string
-	if showPasswords {
-		pass = password
-	} else {
-		pass = "<hidden>"
-	}
-	log.Printf(me+": method=%s url=%s from=%s suffix=[%s] auth realm=[%s] auth=[%s:%s]", r.Method, r.URL.Path, r.RemoteAddr, suffix, realm, username, pass)
+	log.Printf(me+": method=%s url=%s from=%s suffix=[%s] auth realm=[%s] auth=[%s:%s]", r.Method, r.URL.Path, r.RemoteAddr, suffix, realm, username, hidePassword(password))
 
 	ruleField := fields[1]
 	if ruleField != "rule" {
@@ -87,9 +81,11 @@ func nodeA10v2RuleGet(w http.ResponseWriter, r *http.Request, username, password
 	host := fields[0]
 
 	a10host := "https://" + host
-	api := a10host + fmt.Sprintf("/services/rest/V2/?method=authenticate&username=%s&password=%s&format=json", username, password)
+	format := "/services/rest/V2/?method=authenticate&username=%s&password=%s&format=json"
+	api := a10host + fmt.Sprintf(format, username, password)                  // real path
+	apiLog := a10host + fmt.Sprintf(format, username, hidePassword(password)) // path used for logging (hide password)
 
-	log.Printf(me+": method=%s url=%s from=%s opening: %s", r.Method, r.URL.Path, r.RemoteAddr, api)
+	log.Printf(me+": method=%s url=%s from=%s opening: %s", r.Method, r.URL.Path, r.RemoteAddr, apiLog)
 
 	body, errAuth := httpGet(api)
 

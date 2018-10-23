@@ -74,3 +74,10 @@ func handlerRoot(w http.ResponseWriter, r *http.Request, path string) {
 
 	io.WriteString(w, nothing+"\n")
 }
+
+func hidePassword(pwd string) string {
+	if showPasswords {
+		return pwd
+	}
+	return "<pwd-hidden>"
+}

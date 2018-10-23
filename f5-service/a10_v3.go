@@ -41,14 +41,7 @@ func handlerNodeA10v3(w http.ResponseWriter, r *http.Request, path string) {
 		http.Error(w, "not authorized", http.StatusUnauthorized) // 401
 		return
 	}
-
-	var pass string
-	if showPasswords {
-		pass = password
-	} else {
-		pass = "<hidden>"
-	}
-	log.Printf(me+": method=%s url=%s from=%s suffix=[%s] auth realm=[%s] auth=[%s:%s]", r.Method, r.URL.Path, r.RemoteAddr, suffix, realm, username, pass)
+	log.Printf(me+": method=%s url=%s from=%s suffix=[%s] auth realm=[%s] auth=[%s:%s]", r.Method, r.URL.Path, r.RemoteAddr, suffix, realm, username, hidePassword(password))
 
 	ruleField := fields[1]
 	if ruleField != "rule" {
@@ -92,15 +85,11 @@ func nodeA10v3RuleGet(w http.ResponseWriter, r *http.Request, username, password
 
 	log.Printf(me+": method=%s url=%s from=%s opening: %s", r.Method, r.URL.Path, r.RemoteAddr, api)
 
-	var pass string
-	if showPasswords {
-		pass = password
-	} else {
-		pass = "<hidden>"
-	}
-	payload := fmt.Sprintf(`{"credentials": {"username": "%s", "password": "%s"}}`, username, pass)
+	format := `{"credentials": {"username": "%s", "password": "%s"}}`
+	payload := fmt.Sprintf(format, username, password)                  // real data
+	payloadLog := fmt.Sprintf(format, username, hidePassword(password)) // hide password for logging
 
-	log.Printf(me+": method=%s url=%s from=%s payload: [%s]", r.Method, r.URL.Path, r.RemoteAddr, payload)
+	log.Printf(me+": method=%s url=%s from=%s payload: [%s]", r.Method, r.URL.Path, r.RemoteAddr, payloadLog)
 
 	body, errAuth := httpPostString(api, "application/json", payload)
 
