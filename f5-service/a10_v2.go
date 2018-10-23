@@ -81,15 +81,11 @@ func nodeA10v2RuleGet(w http.ResponseWriter, r *http.Request, username, password
 	host := fields[0]
 
 	a10host := "https://" + host
-	api := a10host + "/axapi/v3/auth"
+	api := a10host + fmt.Sprintf("/services/rest/V2/?method=authenticate&username=%s&password=%s&format=json", username, password)
 
 	log.Printf(me+": method=%s url=%s from=%s opening: %s", r.Method, r.URL.Path, r.RemoteAddr, api)
 
-	payload := fmt.Sprintf(`{"credentials": {"username": "%s", "password": "%s"}}`, username, password)
-
-	log.Printf(me+": method=%s url=%s from=%s payload: [%s]", r.Method, r.URL.Path, r.RemoteAddr, payload)
-
-	body, errAuth := httpPostString(api, "application/json", payload)
+	body, errAuth := httpGet(api)
 
 	if errAuth != nil {
 		log.Printf(me+": method=%s url=%s from=%s auth: %v", r.Method, r.URL.Path, r.RemoteAddr, errAuth)

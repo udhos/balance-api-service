@@ -46,6 +46,11 @@ func httpPostString(url string, contentType string, s string) ([]byte, error) {
 	return clientPost(c, url, contentType, bytes.NewBufferString(s))
 }
 
+func httpGet(url string) ([]byte, error) {
+	c := httpClient()
+	return clientGet(c, url)
+}
+
 func clientPost(c *http.Client, url string, contentType string, r io.Reader) ([]byte, error) {
 
 	resp, errPost := c.Post(url, contentType, r)
@@ -65,6 +70,26 @@ func clientPost(c *http.Client, url string, contentType string, r io.Reader) ([]
 	}
 
 	return body, errBody
+}
+
+func clientGet(c *http.Client, url string) ([]byte, error) {
+	resp, errGet := c.Get(url)
+	if errGet != nil {
+		return nil, fmt.Errorf("httpGet: get url=%v: %v", url, errGet)
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("httpGet: bad status: %d", resp.StatusCode)
+	}
+
+	info, errRead := ioutil.ReadAll(resp.Body)
+	if errRead != nil {
+		return nil, fmt.Errorf("httpGet: read all: url=%v: %v", url, errRead)
+	}
+
+	return info, errRead
 }
 
 func writeStr(caller string, w http.ResponseWriter, s string) {
