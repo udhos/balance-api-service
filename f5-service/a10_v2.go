@@ -10,9 +10,9 @@ import (
 // /v1/at/node/<host>/rule/<rule>
 // ^^^^^^^^^^^^
 // prefix
-func handlerNodeA10(w http.ResponseWriter, r *http.Request, path string) {
+func handlerNodeA10v2(w http.ResponseWriter, r *http.Request, path string) {
 
-	me := "handlerNodeA10"
+	me := "handlerNodeA10v2"
 
 	if !strings.HasPrefix(r.URL.Path, path) {
 		sendNotFound(me, w, r)
@@ -54,7 +54,7 @@ func handlerNodeA10(w http.ResponseWriter, r *http.Request, path string) {
 
 	switch r.Method {
 	case http.MethodGet:
-		nodeA10RuleGet(w, r, username, password, fields)
+		nodeA10v2RuleGet(w, r, username, password, fields)
 	default:
 		w.Header().Set("Allow", "POST") // required by 405 error
 		http.Error(w, r.Method+" method not supported", 405)
@@ -74,9 +74,9 @@ func handlerNodeA10(w http.ResponseWriter, r *http.Request, path string) {
 //
 // https://10.255.255.6/services/rest/V2/?method=authenticate&username=admin&password=a10&format=json
 
-func nodeA10RuleGet(w http.ResponseWriter, r *http.Request, username, password string, fields []string) {
+func nodeA10v2RuleGet(w http.ResponseWriter, r *http.Request, username, password string, fields []string) {
 
-	me := "nodeA10RuleGet"
+	me := "nodeA10v2RuleGet"
 
 	host := fields[0]
 

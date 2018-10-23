@@ -2,7 +2,8 @@
 
 # Recipe
 
-    curl -k -u admin:a10 http://192.168.56.20:8080/v1/at/node/10.255.255.6/rule
+    curl -k -u admin:a10 http://192.168.56.20:8080/v1/at2/node/10.255.255.6/rule
+    curl -k -u admin:a10 http://192.168.56.20:8080/v1/at3/node/10.255.255.6/rule
 
 # Recipe forward
 
