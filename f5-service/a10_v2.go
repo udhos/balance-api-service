@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -95,5 +96,28 @@ func nodeA10v2RuleGet(w http.ResponseWriter, r *http.Request, username, password
 		return
 	}
 
-	writeStr(me, w, "done body:"+string(body))
+	response := map[string]interface{}{}
+
+	errJson := json.Unmarshal(body, &response)
+	if errJson != nil {
+		log.Printf(me+": method=%s url=%s from=%s auth json: %v", r.Method, r.URL.Path, r.RemoteAddr, errJson)
+		http.Error(w, host+" bad gateway - auth json", http.StatusBadGateway) // 502
+		return
+	}
+
+	id, found := response["session_id"]
+	if !found {
+		log.Printf(me+": method=%s url=%s from=%s missing session_id", r.Method, r.URL.Path, r.RemoteAddr)
+		http.Error(w, host+" bad gateway - missing session_id", http.StatusBadGateway) // 502
+		return
+	}
+
+	session_id, isStr := id.(string)
+	if !isStr {
+		log.Printf(me+": method=%s url=%s from=%s missing session_id", r.Method, r.URL.Path, r.RemoteAddr)
+		http.Error(w, host+" bad gateway - session_id not a string", http.StatusBadGateway) // 502
+		return
+	}
+
+	writeStr(me, w, "done session_id="+session_id)
 }
