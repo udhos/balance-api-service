@@ -13,6 +13,10 @@ const (
 	version = "0.0"
 )
 
+var (
+	showPasswords bool
+)
+
 func main() {
 
 	me := os.Args[0]
@@ -23,6 +27,12 @@ func main() {
 	if addr == "" {
 		addr = ":8080"
 	}
+
+	if os.Getenv("SHOW_PASSWORDS") != "" {
+		showPasswords = true
+	}
+
+	log.Printf("showPasswords=%v SHOW_PASSWORDS=[%s]", showPasswords, os.Getenv("SHOW_PASSWORDS"))
 
 	register("/", func(w http.ResponseWriter, r *http.Request) { handlerRoot(w, r, "/") })
 

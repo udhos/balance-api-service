@@ -44,7 +44,13 @@ func handlerNodeF5(w http.ResponseWriter, r *http.Request, path string) {
 		http.Error(w, "not authorized", http.StatusUnauthorized) // 401
 		return
 	}
-	log.Printf(me+": method=%s url=%s from=%s suffix=[%s] auth realm=[%s] auth=[%s:%s]", r.Method, r.URL.Path, r.RemoteAddr, suffix, realm, username, password)
+	var pass string
+	if showPasswords {
+		pass = password
+	} else {
+		pass = "<hidden>"
+	}
+	log.Printf(me+": method=%s url=%s from=%s suffix=[%s] auth realm=[%s] auth=[%s:%s]", r.Method, r.URL.Path, r.RemoteAddr, suffix, realm, username, pass)
 
 	ruleField := fields[1]
 	if ruleField != "rule" {
