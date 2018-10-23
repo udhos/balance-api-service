@@ -81,6 +81,18 @@ func nodeA10v2RuleGet(w http.ResponseWriter, r *http.Request, username, password
 
 	host := fields[0]
 
+	session_id := nodeA10v2Auth(w, r, host, username, password)
+	if session_id == "" {
+		return
+	}
+
+	writeStr(me, w, "done session_id="+session_id)
+}
+
+func nodeA10v2Auth(w http.ResponseWriter, r *http.Request, host, username, password string) string {
+
+	me := "nodeA10v2Auth"
+
 	a10host := "https://" + host
 	format := "/services/rest/V2/?method=authenticate&username=%s&password=%s&format=json"
 	api := a10host + fmt.Sprintf(format, username, password)                  // real path
@@ -93,7 +105,7 @@ func nodeA10v2RuleGet(w http.ResponseWriter, r *http.Request, username, password
 	if errAuth != nil {
 		log.Printf(me+": method=%s url=%s from=%s auth: %v", r.Method, r.URL.Path, r.RemoteAddr, errAuth)
 		http.Error(w, host+" bad gateway - auth", http.StatusBadGateway) // 502
-		return
+		return ""
 	}
 
 	response := map[string]interface{}{}
@@ -102,22 +114,22 @@ func nodeA10v2RuleGet(w http.ResponseWriter, r *http.Request, username, password
 	if errJson != nil {
 		log.Printf(me+": method=%s url=%s from=%s auth json: %v", r.Method, r.URL.Path, r.RemoteAddr, errJson)
 		http.Error(w, host+" bad gateway - auth json", http.StatusBadGateway) // 502
-		return
+		return ""
 	}
 
 	id, found := response["session_id"]
 	if !found {
 		log.Printf(me+": method=%s url=%s from=%s missing session_id", r.Method, r.URL.Path, r.RemoteAddr)
-		http.Error(w, host+" bad gateway - missing session_id", http.StatusBadGateway) // 502
-		return
+		http.Error(w, host+" bad gateway - auth missing session_id", http.StatusBadGateway) // 502
+		return ""
 	}
 
 	session_id, isStr := id.(string)
 	if !isStr {
 		log.Printf(me+": method=%s url=%s from=%s missing session_id", r.Method, r.URL.Path, r.RemoteAddr)
-		http.Error(w, host+" bad gateway - session_id not a string", http.StatusBadGateway) // 502
-		return
+		http.Error(w, host+" bad gateway - auth session_id not a string", http.StatusBadGateway) // 502
+		return ""
 	}
 
-	writeStr(me, w, "done session_id="+session_id)
+	return session_id
 }
