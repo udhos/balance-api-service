@@ -131,5 +131,7 @@ func nodeA10v2Auth(w http.ResponseWriter, r *http.Request, host, username, passw
 		return ""
 	}
 
+	log.Printf(me+": method=%s url=%s from=%s session_id=[%s]", r.Method, r.URL.Path, r.RemoteAddr, session_id)
+
 	return session_id
 }
