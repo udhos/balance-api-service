@@ -65,15 +65,22 @@ func handlerNodeA10v2(w http.ResponseWriter, r *http.Request, path string) {
 
 // V3:
 //
-// https://github.com/a10networks/tps-scripts/blob/master/axapi_curl_example.txt
+// Source: https://github.com/a10networks/tps-scripts/blob/master/axapi_curl_example.txt
 //
 // curl -k -X POST -H 'content-type: application/json' -d '{"credentials": {"username": "admin", "password": "a10"}}' 'https://192.168.199.152/axapi/v3/auth'
 //
 // V2:
 //
-// https://www.a10networks.com/resources/articles/axapi-python
+// Source: https://www.a10networks.com/resources/articles/axapi-python
 //
 // https://10.255.255.6/services/rest/V2/?method=authenticate&username=admin&password=a10&format=json
+//
+// V2.1:
+//
+// Source: https://github.com/a10networks/acos-client/blob/master/acos_client/v21/session.py
+//
+// url:       /services/rest/v2.1/?format=json&method=authenticate
+// post body: { "username": username, "password": password }
 
 func nodeA10v2RuleGet(w http.ResponseWriter, r *http.Request, username, password string, fields []string) {
 
@@ -89,19 +96,44 @@ func nodeA10v2RuleGet(w http.ResponseWriter, r *http.Request, username, password
 	writeStr(me, w, "done session_id="+session_id)
 }
 
-func nodeA10v2Auth(w http.ResponseWriter, r *http.Request, host, username, password string) string {
+func a10v2auth(r *http.Request, host, username, password string) ([]byte, error) {
 
-	me := "nodeA10v2Auth"
+	me := "a10v2auth"
 
 	a10host := "https://" + host
+
 	format := "/services/rest/V2/?method=authenticate&username=%s&password=%s&format=json"
 	api := a10host + fmt.Sprintf(format, username, password)                  // real path
 	apiLog := a10host + fmt.Sprintf(format, username, hidePassword(password)) // path used for logging (hide password)
 
 	log.Printf(me+": method=%s url=%s from=%s opening: %s", r.Method, r.URL.Path, r.RemoteAddr, apiLog)
 
-	body, errAuth := httpGet(api)
+	return httpGet(api)
+}
 
+func a10v21auth(r *http.Request, host, username, password string) ([]byte, error) {
+
+	me := "a10v21auth"
+
+	a10host := "https://" + host
+
+	api := a10host + "/services/rest/v2.1/?format=json&method=authenticate"
+
+	format := `{ "username": "%s", "password": "%s" }`
+	payload := fmt.Sprintf(format, username, password)                  // real path
+	payloadLog := fmt.Sprintf(format, username, hidePassword(password)) // path used for logging (hide password)
+
+	log.Printf(me+": method=%s url=%s from=%s opening=%s payload=[%s]", r.Method, r.URL.Path, r.RemoteAddr, api, payloadLog)
+
+	return httpPostString(api, "application/json", payload)
+}
+
+func nodeA10v2Auth(w http.ResponseWriter, r *http.Request, host, username, password string) string {
+
+	me := "nodeA10v2Auth"
+
+	//body, errAuth := a10v2auth(r, host, username, password)
+	body, errAuth := a10v21auth(r, host, username, password)
 	if errAuth != nil {
 		log.Printf(me+": method=%s url=%s from=%s auth: %v", r.Method, r.URL.Path, r.RemoteAddr, errAuth)
 		http.Error(w, host+" bad gateway - auth", http.StatusBadGateway) // 502
