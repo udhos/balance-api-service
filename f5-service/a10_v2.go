@@ -102,41 +102,18 @@ func nodeA10v2RuleGet(w http.ResponseWriter, r *http.Request, username, password
 	}
 
 	vsList := a10VirtualServerList(host, sessionId)
-
-	/*
-		bodyVirtServers, errGet := a10SessionGet(host, "slb.virtual_server.getAll", sessionId)
-
-		if errGet == nil {
-			vsList := jsonExtractList(bodyVirtServers, "virtual_server_list")
-			if vsList != nil {
-				for _, vs := range vsList {
-					vsMap, isMap := vs.(map[string]interface{})
-					if isMap {
-						name := vsMap["name"]
-						addr := vsMap["address"]
-						portList := vsMap["vport_list"]
-						pList, isList := portList.([]interface{})
-						if isList {
-							for _, vp := range pList {
-								pMap, isPMap := vp.(map[string]interface{})
-								if isPMap {
-									port := pMap["port"]
-									pStr := fmt.Sprintf("%v", port)
-									sGroup := pMap["service_group"]
-									log.Printf("virtual server name=[%s] address=[%s] port=[%s] service_group=[%s]", name, addr, pStr, sGroup)
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	*/
-
-	var list string
+	var list1 string
 	for _, vs := range vsList {
 		msg := fmt.Sprintf("virtual server: %v", vs)
-		list += msg + "\n"
+		list1 += msg + "\n"
+		log.Print(msg)
+	}
+
+	sgList := a10ServiceGroupList(host, sessionId)
+	var list2 string
+	for _, vs := range sgList {
+		msg := fmt.Sprintf("service group: %v", vs)
+		list2 += msg + "\n"
 		log.Print(msg)
 	}
 
@@ -145,7 +122,7 @@ func nodeA10v2RuleGet(w http.ResponseWriter, r *http.Request, username, password
 		// log warning only
 	}
 
-	writeStr(me, w, "done: "+list)
+	writeStr(me, w, "done: "+list1+list2)
 }
 
 type a10VServer struct {
@@ -153,6 +130,39 @@ type a10VServer struct {
 	address      string
 	port         string
 	serviceGroup string
+}
+
+type a10ServiceGroup struct {
+	name string
+}
+
+func a10ServiceGroupList(host, sessionId string) []a10ServiceGroup {
+	var list []a10ServiceGroup
+
+	groups, errGet := a10SessionGet(host, "slb.service_group.getAll", sessionId)
+	if errGet != nil {
+		return list
+	}
+
+	log.Printf("groups: [%s]", string(groups))
+
+	sgList := jsonExtractList(groups, "service_group_list")
+	if sgList == nil {
+		return list
+	}
+
+	for _, sg := range sgList {
+		sgMap, isMap := sg.(map[string]interface{})
+		if !isMap {
+			continue
+		}
+
+		name := sgMap["name"].(string)
+
+		list = append(list, a10ServiceGroup{name})
+	}
+
+	return list
 }
 
 func a10VirtualServerList(host, sessionId string) []a10VServer {
