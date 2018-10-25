@@ -101,7 +101,32 @@ func nodeA10v2RuleGet(w http.ResponseWriter, r *http.Request, username, password
 		return
 	}
 
-	bodyVirtServers, _ := a10SessionGet(host, "slb.virtual_server.getAll", sessionId)
+	bodyVirtServers, errGet := a10SessionGet(host, "slb.virtual_server.getAll", sessionId)
+
+	if errGet == nil {
+		vsList := jsonExtractList(bodyVirtServers, "virtual_server_list")
+		if vsList != nil {
+			for _, vs := range vsList {
+				vsMap, isMap := vs.(map[string]interface{})
+				if isMap {
+					name := vsMap["name"]
+					addr := vsMap["address"]
+					portList := vsMap["vport_list"]
+					pList, isList := portList.([]interface{})
+					if isList {
+						for _, vp := range pList {
+							pMap, isPMap := vp.(map[string]interface{})
+							if isPMap {
+								port := pMap["port"]
+								pStr := fmt.Sprintf("%v", port)
+								log.Printf("virtual server name=[%s] address=[%s] port=[%s]", name, addr, pStr)
+							}
+						}
+					}
+				}
+			}
+		}
+	}
 
 	if errClose := nodeA10v2Close(w, r, host, sessionId); errClose != nil {
 		log.Printf(me+": method=%s url=%s from=%s close session_id=[%s] error: %v", r.Method, r.URL.Path, r.RemoteAddr, sessionId, errClose)
@@ -109,6 +134,27 @@ func nodeA10v2RuleGet(w http.ResponseWriter, r *http.Request, username, password
 	}
 
 	writeStr(me, w, "done: "+string(bodyVirtServers))
+}
+
+func jsonExtractList(body []byte, listName string) []interface{} {
+	me := "extractList"
+	tab := map[string]interface{}{}
+	errJson := json.Unmarshal(body, &tab)
+	if errJson != nil {
+		log.Printf(me+": list=%s json error: %v", listName, errJson)
+		return nil
+	}
+	list, found := tab[listName]
+	if !found {
+		log.Printf(me+": list=%s not found", listName)
+		return nil
+	}
+	slice, isSlice := list.([]interface{})
+	if !isSlice {
+		log.Printf(me+": list=%s not an slice", listName)
+		return nil
+	}
+	return slice
 }
 
 func a10SessionGet(host, method, sessionId string) ([]byte, error) {
