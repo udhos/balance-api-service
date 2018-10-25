@@ -82,12 +82,12 @@ func handlerNodeA10v2(w http.ResponseWriter, r *http.Request, path string) {
 // url:       /services/rest/v2.1/?format=json&method=authenticate
 // post body: { "username": username, "password": password }
 
-func a10v21url(method string) string {
-	return "/services/rest/v2.1/?format=json&method=" + method
+func a10v21url(host, method string) string {
+	return "https://" + host + "/services/rest/v2.1/?format=json&method=" + method
 }
 
-func a10v21urlSession(method, sessionId string) string {
-	return a10v21url(method) + "&session_id=" + sessionId
+func a10v21urlSession(host, method, sessionId string) string {
+	return a10v21url(host, method) + "&session_id=" + sessionId
 }
 
 func nodeA10v2RuleGet(w http.ResponseWriter, r *http.Request, username, password string, fields []string) {
@@ -96,27 +96,43 @@ func nodeA10v2RuleGet(w http.ResponseWriter, r *http.Request, username, password
 
 	host := fields[0]
 
-	session_id := nodeA10v2Auth(w, r, host, username, password)
-	if session_id == "" {
+	sessionId := nodeA10v2Auth(w, r, host, username, password)
+	if sessionId == "" {
 		return
 	}
 
-	if errClose := nodeA10v2Close(w, r, host, session_id); errClose != nil {
-		log.Printf(me+": method=%s url=%s from=%s close session error: %v", r.Method, r.URL.Path, r.RemoteAddr, errClose)
+	a10RuleGet(w, r, sessionId, host)
+
+	if errClose := nodeA10v2Close(w, r, host, sessionId); errClose != nil {
+		log.Printf(me+": method=%s url=%s from=%s close session_id=[%s] error: %v", r.Method, r.URL.Path, r.RemoteAddr, sessionId, errClose)
 		// log warning only
 	}
 
-	writeStr(me, w, "done session_id="+session_id)
+	writeStr(me, w, "done session_id="+sessionId)
+}
+
+func a10RuleGet(w http.ResponseWriter, r *http.Request, sessionId, host string) {
+
+	me := "a10RuleGet"
+
+	api := a10v21urlSession(host, "slb.virtual_server.getAll", sessionId)
+
+	log.Printf(me+": method=%s url=%s from=%s session_id=[%s] api=%s", r.Method, r.URL.Path, r.RemoteAddr, sessionId, api)
+
+	body, errGet := httpGet(api)
+	if errGet != nil {
+		log.Printf(me+": method=%s url=%s from=%s session_id=[%s] api=%s error: %v", r.Method, r.URL.Path, r.RemoteAddr, sessionId, api, errGet)
+		return
+	}
+
+	log.Printf(me+": method=%s url=%s from=%s session_id=[%s] api=%s body=[%s]", r.Method, r.URL.Path, r.RemoteAddr, sessionId, api, string(body))
 }
 
 func nodeA10v2Close(w http.ResponseWriter, r *http.Request, host, sessionId string) error {
 
 	me := "nodeA10v2Close"
 
-	a10host := "https://" + host
-
-	//api := a10host + "/services/rest/v2.1/?format=json&method=session.close&session_id=" + sessionId
-	api := a10host + a10v21urlSession("session.close", sessionId)
+	api := a10v21urlSession(host, "session.close", sessionId)
 
 	format := `{"session_id": "%s"}`
 	payload := fmt.Sprintf(format, sessionId)
@@ -192,10 +208,7 @@ func a10v21auth(r *http.Request, host, username, password string) ([]byte, error
 
 	me := "a10v21auth"
 
-	a10host := "https://" + host
-
-	//api := a10host + "/services/rest/v2.1/?format=json&method=authenticate"
-	api := a10host + a10v21url("authenticate")
+	api := a10v21url(host, "authenticate")
 
 	format := `{ "username": "%s", "password": "%s" }`
 	payload := fmt.Sprintf(format, username, password)                  // real payload
