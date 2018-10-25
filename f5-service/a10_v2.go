@@ -95,6 +95,7 @@ func nodeA10v2RuleGet(w http.ResponseWriter, r *http.Request, username, password
 
 	if errClose := nodeA10v2Close(w, r, host, session_id); errClose != nil {
 		log.Printf(me+": method=%s url=%s from=%s close session error: %v", r.Method, r.URL.Path, r.RemoteAddr, errClose)
+		// log warning only
 	}
 
 	writeStr(me, w, "done session_id="+session_id)
