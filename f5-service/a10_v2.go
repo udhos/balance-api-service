@@ -82,6 +82,14 @@ func handlerNodeA10v2(w http.ResponseWriter, r *http.Request, path string) {
 // url:       /services/rest/v2.1/?format=json&method=authenticate
 // post body: { "username": username, "password": password }
 
+func a10v21url(method string) string {
+	return "/services/rest/v2.1/?format=json&method=" + method
+}
+
+func a10v21urlSession(method, sessionId string) string {
+	return a10v21url(method) + "&session_id=" + sessionId
+}
+
 func nodeA10v2RuleGet(w http.ResponseWriter, r *http.Request, username, password string, fields []string) {
 
 	me := "nodeA10v2RuleGet"
@@ -107,7 +115,8 @@ func nodeA10v2Close(w http.ResponseWriter, r *http.Request, host, sessionId stri
 
 	a10host := "https://" + host
 
-	api := a10host + "/services/rest/v2.1/?format=json&method=session.close&session_id=" + sessionId
+	//api := a10host + "/services/rest/v2.1/?format=json&method=session.close&session_id=" + sessionId
+	api := a10host + a10v21urlSession("session.close", sessionId)
 
 	format := `{"session_id": "%s"}`
 	payload := fmt.Sprintf(format, sessionId)
@@ -169,6 +178,7 @@ func a10v2auth(r *http.Request, host, username, password string) ([]byte, error)
 
 	a10host := "https://" + host
 
+	// Attention: this is a V2 api, do not use V21 helpers
 	format := "/services/rest/V2/?method=authenticate&username=%s&password=%s&format=json"
 	api := a10host + fmt.Sprintf(format, username, password)                  // real path
 	apiLog := a10host + fmt.Sprintf(format, username, hidePassword(password)) // path used for logging (hide password)
@@ -184,7 +194,8 @@ func a10v21auth(r *http.Request, host, username, password string) ([]byte, error
 
 	a10host := "https://" + host
 
-	api := a10host + "/services/rest/v2.1/?format=json&method=authenticate"
+	//api := a10host + "/services/rest/v2.1/?format=json&method=authenticate"
+	api := a10host + a10v21url("authenticate")
 
 	format := `{ "username": "%s", "password": "%s" }`
 	payload := fmt.Sprintf(format, username, password)                  // real payload
