@@ -101,32 +101,43 @@ func nodeA10v2RuleGet(w http.ResponseWriter, r *http.Request, username, password
 		return
 	}
 
-	bodyVirtServers, errGet := a10SessionGet(host, "slb.virtual_server.getAll", sessionId)
+	vsList := a10VirtualServerList(host, sessionId)
 
-	if errGet == nil {
-		vsList := jsonExtractList(bodyVirtServers, "virtual_server_list")
-		if vsList != nil {
-			for _, vs := range vsList {
-				vsMap, isMap := vs.(map[string]interface{})
-				if isMap {
-					name := vsMap["name"]
-					addr := vsMap["address"]
-					portList := vsMap["vport_list"]
-					pList, isList := portList.([]interface{})
-					if isList {
-						for _, vp := range pList {
-							pMap, isPMap := vp.(map[string]interface{})
-							if isPMap {
-								port := pMap["port"]
-								pStr := fmt.Sprintf("%v", port)
-								sGroup := pMap["service_group"]
-								log.Printf("virtual server name=[%s] address=[%s] port=[%s] service_group=[%s]", name, addr, pStr, sGroup)
+	/*
+		bodyVirtServers, errGet := a10SessionGet(host, "slb.virtual_server.getAll", sessionId)
+
+		if errGet == nil {
+			vsList := jsonExtractList(bodyVirtServers, "virtual_server_list")
+			if vsList != nil {
+				for _, vs := range vsList {
+					vsMap, isMap := vs.(map[string]interface{})
+					if isMap {
+						name := vsMap["name"]
+						addr := vsMap["address"]
+						portList := vsMap["vport_list"]
+						pList, isList := portList.([]interface{})
+						if isList {
+							for _, vp := range pList {
+								pMap, isPMap := vp.(map[string]interface{})
+								if isPMap {
+									port := pMap["port"]
+									pStr := fmt.Sprintf("%v", port)
+									sGroup := pMap["service_group"]
+									log.Printf("virtual server name=[%s] address=[%s] port=[%s] service_group=[%s]", name, addr, pStr, sGroup)
+								}
 							}
 						}
 					}
 				}
 			}
 		}
+	*/
+
+	var list string
+	for _, vs := range vsList {
+		msg := fmt.Sprintf("virtual server: %v", vs)
+		list += msg + "\n"
+		log.Print(msg)
 	}
 
 	if errClose := nodeA10v2Close(w, r, host, sessionId); errClose != nil {
@@ -134,7 +145,56 @@ func nodeA10v2RuleGet(w http.ResponseWriter, r *http.Request, username, password
 		// log warning only
 	}
 
-	writeStr(me, w, "done: "+string(bodyVirtServers))
+	writeStr(me, w, "done: "+list)
+}
+
+type a10VServer struct {
+	name         string
+	address      string
+	port         string
+	serviceGroup string
+}
+
+func a10VirtualServerList(host, sessionId string) []a10VServer {
+	var list []a10VServer
+
+	bodyVirtServers, errGet := a10SessionGet(host, "slb.virtual_server.getAll", sessionId)
+	if errGet != nil {
+		return list
+	}
+
+	vsList := jsonExtractList(bodyVirtServers, "virtual_server_list")
+	if vsList == nil {
+		return list
+	}
+
+	for _, vs := range vsList {
+		vsMap, isMap := vs.(map[string]interface{})
+		if !isMap {
+			continue
+		}
+
+		name := vsMap["name"].(string)
+		addr := vsMap["address"].(string)
+		portList := vsMap["vport_list"]
+		pList, isList := portList.([]interface{})
+		if !isList {
+			continue
+		}
+		for _, vp := range pList {
+			pMap, isPMap := vp.(map[string]interface{})
+			if !isPMap {
+				continue
+			}
+			port := pMap["port"]
+			pStr := fmt.Sprintf("%v", port)
+			sGroup := pMap["service_group"].(string)
+			//log.Printf("virtual server name=[%s] address=[%s] port=[%s] service_group=[%s]", name, addr, pStr, sGroup)
+			list = append(list, a10VServer{name, addr, pStr, sGroup})
+		}
+	}
+
+	return list
 }
 
 func jsonExtractList(body []byte, listName string) []interface{} {
