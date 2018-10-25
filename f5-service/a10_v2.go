@@ -119,7 +119,8 @@ func nodeA10v2RuleGet(w http.ResponseWriter, r *http.Request, username, password
 							if isPMap {
 								port := pMap["port"]
 								pStr := fmt.Sprintf("%v", port)
-								log.Printf("virtual server name=[%s] address=[%s] port=[%s]", name, addr, pStr)
+								sGroup := pMap["service_group"]
+								log.Printf("virtual server name=[%s] address=[%s] port=[%s] service_group=[%s]", name, addr, pStr, sGroup)
 							}
 						}
 					}
