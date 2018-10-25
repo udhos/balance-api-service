@@ -93,39 +93,33 @@ func nodeA10v2RuleGet(w http.ResponseWriter, r *http.Request, username, password
 		return
 	}
 
+	if errClose := nodeA10v2Close(w, r, host, session_id); errClose != nil {
+		log.Printf(me+": method=%s url=%s from=%s close session error: %v", r.Method, r.URL.Path, r.RemoteAddr, errClose)
+	}
+
 	writeStr(me, w, "done session_id="+session_id)
 }
 
-func a10v2auth(r *http.Request, host, username, password string) ([]byte, error) {
+func nodeA10v2Close(w http.ResponseWriter, r *http.Request, host, sessionId string) error {
 
-	me := "a10v2auth"
-
-	a10host := "https://" + host
-
-	format := "/services/rest/V2/?method=authenticate&username=%s&password=%s&format=json"
-	api := a10host + fmt.Sprintf(format, username, password)                  // real path
-	apiLog := a10host + fmt.Sprintf(format, username, hidePassword(password)) // path used for logging (hide password)
-
-	log.Printf(me+": method=%s url=%s from=%s opening: %s", r.Method, r.URL.Path, r.RemoteAddr, apiLog)
-
-	return httpGet(api)
-}
-
-func a10v21auth(r *http.Request, host, username, password string) ([]byte, error) {
-
-	me := "a10v21auth"
+	me := "nodeA10v2Close"
 
 	a10host := "https://" + host
 
-	api := a10host + "/services/rest/v2.1/?format=json&method=authenticate"
+	api := a10host + "/services/rest/v2.1/?format=json&method=session.close&session_id=" + sessionId
 
-	format := `{ "username": "%s", "password": "%s" }`
-	payload := fmt.Sprintf(format, username, password)                  // real payload
-	payloadLog := fmt.Sprintf(format, username, hidePassword(password)) // payload used for logging (hide password)
+	format := `{"session_id": "%s"}`
+	payload := fmt.Sprintf(format, sessionId)
 
-	log.Printf(me+": method=%s url=%s from=%s opening=%s payload=[%s]", r.Method, r.URL.Path, r.RemoteAddr, api, payloadLog)
+	log.Printf(me+": method=%s url=%s from=%s session_id=[%s] api=%s payload=[%s] closing", r.Method, r.URL.Path, r.RemoteAddr, sessionId, api, payload)
 
-	return httpPostString(api, "application/json", payload)
+	_, errPost := httpPostString(api, "application/json", payload)
+
+	if errPost == nil {
+		log.Printf(me+": method=%s url=%s from=%s session_id=[%s] api=%s payload=[%s] closed", r.Method, r.URL.Path, r.RemoteAddr, sessionId, api, payload)
+	}
+
+	return errPost
 }
 
 func nodeA10v2Auth(w http.ResponseWriter, r *http.Request, host, username, password string) string {
@@ -166,4 +160,36 @@ func nodeA10v2Auth(w http.ResponseWriter, r *http.Request, host, username, passw
 	log.Printf(me+": method=%s url=%s from=%s session_id=[%s]", r.Method, r.URL.Path, r.RemoteAddr, session_id)
 
 	return session_id
+}
+
+func a10v2auth(r *http.Request, host, username, password string) ([]byte, error) {
+
+	me := "a10v2auth"
+
+	a10host := "https://" + host
+
+	format := "/services/rest/V2/?method=authenticate&username=%s&password=%s&format=json"
+	api := a10host + fmt.Sprintf(format, username, password)                  // real path
+	apiLog := a10host + fmt.Sprintf(format, username, hidePassword(password)) // path used for logging (hide password)
+
+	log.Printf(me+": method=%s url=%s from=%s opening: %s", r.Method, r.URL.Path, r.RemoteAddr, apiLog)
+
+	return httpGet(api)
+}
+
+func a10v21auth(r *http.Request, host, username, password string) ([]byte, error) {
+
+	me := "a10v21auth"
+
+	a10host := "https://" + host
+
+	api := a10host + "/services/rest/v2.1/?format=json&method=authenticate"
+
+	format := `{ "username": "%s", "password": "%s" }`
+	payload := fmt.Sprintf(format, username, password)                  // real payload
+	payloadLog := fmt.Sprintf(format, username, hidePassword(password)) // payload used for logging (hide password)
+
+	log.Printf(me+": method=%s url=%s from=%s opening=%s payload=[%s]", r.Method, r.URL.Path, r.RemoteAddr, api, payloadLog)
+
+	return httpPostString(api, "application/json", payload)
 }
