@@ -101,31 +101,24 @@ func nodeA10v2RuleGet(w http.ResponseWriter, r *http.Request, username, password
 		return
 	}
 
-	a10RuleGet(w, r, sessionId, host)
+	bodyVirtServers, _ := a10SessionGet(host, "slb.virtual_server.getAll", sessionId)
 
 	if errClose := nodeA10v2Close(w, r, host, sessionId); errClose != nil {
 		log.Printf(me+": method=%s url=%s from=%s close session_id=[%s] error: %v", r.Method, r.URL.Path, r.RemoteAddr, sessionId, errClose)
 		// log warning only
 	}
 
-	writeStr(me, w, "done session_id="+sessionId)
+	writeStr(me, w, "done: "+string(bodyVirtServers))
 }
 
-func a10RuleGet(w http.ResponseWriter, r *http.Request, sessionId, host string) {
-
-	me := "a10RuleGet"
-
-	api := a10v21urlSession(host, "slb.virtual_server.getAll", sessionId)
-
-	log.Printf(me+": method=%s url=%s from=%s session_id=[%s] api=%s", r.Method, r.URL.Path, r.RemoteAddr, sessionId, api)
-
-	body, errGet := httpGet(api)
-	if errGet != nil {
-		log.Printf(me+": method=%s url=%s from=%s session_id=[%s] api=%s error: %v", r.Method, r.URL.Path, r.RemoteAddr, sessionId, api, errGet)
-		return
+func a10SessionGet(host, method, sessionId string) ([]byte, error) {
+	me := "a10SessionGet"
+	api := a10v21urlSession(host, method, sessionId)
+	body, err := httpGet(api)
+	if err != nil {
+		log.Printf(me+": api=[%s] error: %v", api, err)
 	}
-
-	log.Printf(me+": method=%s url=%s from=%s session_id=[%s] api=%s body=[%s]", r.Method, r.URL.Path, r.RemoteAddr, sessionId, api, string(body))
+	return body, err
 }
 
 func nodeA10v2Close(w http.ResponseWriter, r *http.Request, host, sessionId string) error {
