@@ -120,8 +120,8 @@ func a10v21auth(r *http.Request, host, username, password string) ([]byte, error
 	api := a10host + "/services/rest/v2.1/?format=json&method=authenticate"
 
 	format := `{ "username": "%s", "password": "%s" }`
-	payload := fmt.Sprintf(format, username, password)                  // real path
-	payloadLog := fmt.Sprintf(format, username, hidePassword(password)) // path used for logging (hide password)
+	payload := fmt.Sprintf(format, username, password)                  // real payload
+	payloadLog := fmt.Sprintf(format, username, hidePassword(password)) // payload used for logging (hide password)
 
 	log.Printf(me+": method=%s url=%s from=%s opening=%s payload=[%s]", r.Method, r.URL.Path, r.RemoteAddr, api, payloadLog)
 
