@@ -6,6 +6,8 @@ import (
 	"log"
 	"net/http"
 	"strings"
+
+	"github.com/sanity-io/litter"
 )
 
 // /v1/at/node/<host>/rule/<rule>
@@ -102,28 +104,16 @@ func nodeA10v2RuleGet(w http.ResponseWriter, r *http.Request, username, password
 	}
 
 	vsList := a10VirtualServerList(host, sessionId)
-	var list1 string
-	for _, vs := range vsList {
-		msg := fmt.Sprintf("virtual server: %v", vs)
-		list1 += msg + "\n"
-		log.Print(msg)
-	}
+	list1 := "virtual servers: " + litter.Sdump(vsList) + "\n"
+	log.Printf(list1)
 
 	sgList := a10ServiceGroupList(host, sessionId)
-	var list2 string
-	for _, vs := range sgList {
-		msg := fmt.Sprintf("service group: %v", vs)
-		list2 += msg + "\n"
-		log.Print(msg)
-	}
+	list2 := "service groups: " + litter.Sdump(sgList) + "\n"
+	log.Printf(list2)
 
 	sList := a10ServerList(host, sessionId)
-	var list3 string
-	for _, s := range sList {
-		msg := fmt.Sprintf("server: %v", s)
-		list3 += msg + "\n"
-		log.Print(msg)
-	}
+	list3 := "servers: " + litter.Sdump(sList) + "\n"
+	log.Printf(list3)
 
 	if errClose := nodeA10v2Close(w, r, host, sessionId); errClose != nil {
 		log.Printf(me+": method=%s url=%s from=%s close session_id=[%s] error: %v", r.Method, r.URL.Path, r.RemoteAddr, sessionId, errClose)
@@ -134,21 +124,21 @@ func nodeA10v2RuleGet(w http.ResponseWriter, r *http.Request, username, password
 }
 
 type a10VServer struct {
-	name         string
-	address      string
-	port         string
-	serviceGroup string
+	Name         string
+	Address      string
+	Port         string
+	ServiceGroup string
 }
 
 type a10ServiceGroup struct {
-	name    string
-	members []string
+	Name    string
+	Members []string
 }
 
 type a10Server struct {
-	name  string
-	host  string
-	ports []string
+	Name  string
+	Host  string
+	Ports []string
 }
 
 func mapGetStr(tab map[string]interface{}, key string) string {
@@ -188,8 +178,7 @@ func a10ServerList(host, sessionId string) []a10Server {
 
 		name := mapGetStr(sMap, "name")
 		host := mapGetStr(sMap, "host")
-		//host := "address=fixme"
-		server := a10Server{name: name, host: host}
+		server := a10Server{Name: name, Host: host}
 
 		portList := sMap["port_list"]
 		pList, isList := portList.([]interface{})
@@ -202,7 +191,7 @@ func a10ServerList(host, sessionId string) []a10Server {
 				continue
 			}
 			portNum := pMap["port_num"]
-			server.ports = append(server.ports, fmt.Sprintf("%v", portNum))
+			server.Ports = append(server.Ports, fmt.Sprintf("%v", portNum))
 		}
 
 		list = append(list, server)
@@ -233,7 +222,7 @@ func a10ServiceGroupList(host, sessionId string) []a10ServiceGroup {
 		}
 
 		name := mapGetStr(sgMap, "name")
-		group := a10ServiceGroup{name: name}
+		group := a10ServiceGroup{Name: name}
 
 		memberList := sgMap["member_list"]
 		mList, isList := memberList.([]interface{})
@@ -241,7 +230,7 @@ func a10ServiceGroupList(host, sessionId string) []a10ServiceGroup {
 			continue
 		}
 		for _, m := range mList {
-			group.members = append(group.members, fmt.Sprintf("%v", m))
+			group.Members = append(group.Members, fmt.Sprintf("%v", m))
 		}
 
 		list = append(list, group)
