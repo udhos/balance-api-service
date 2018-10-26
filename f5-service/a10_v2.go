@@ -115,12 +115,34 @@ func nodeA10v2RuleGet(w http.ResponseWriter, r *http.Request, username, password
 	list3 := "servers: " + litter.Sdump(sList) + "\n"
 	log.Printf(list3)
 
+	vList := []virtual{}
+	for _, vs := range vsList {
+		var p pool
+		for _, sg := range sgList {
+			if sg.Name == vs.ServiceGroup {
+				p.Name = sg.Name
+				break
+			}
+		}
+
+		for _, s := range sList {
+			for _, port := range s.Ports {
+				log.Printf("FIXME WRITEME wrongly adding server=%s to pool=%s", s.Name+"/"+s.Host, p.Name)
+				p.Members = append(p.Members, server{Name: s.Name, Address: s.Host, Port: port})
+			}
+		}
+
+		v := virtual{Name: vs.Name, Address: vs.Address, Port: vs.Port, Pool: p}
+		vList = append(vList, v)
+	}
+	list4 := "API virtual: " + litter.Sdump(vList) + "\n"
+
 	if errClose := nodeA10v2Close(w, r, host, sessionId); errClose != nil {
 		log.Printf(me+": method=%s url=%s from=%s close session_id=[%s] error: %v", r.Method, r.URL.Path, r.RemoteAddr, sessionId, errClose)
 		// log warning only
 	}
 
-	writeStr(me, w, "done: "+list1+list2+list3)
+	writeStr(me, w, "done: "+list1+list2+list3+list4)
 }
 
 type a10VServer struct {
