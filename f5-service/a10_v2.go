@@ -117,12 +117,20 @@ func nodeA10v2RuleGet(w http.ResponseWriter, r *http.Request, username, password
 		log.Print(msg)
 	}
 
+	sList := a10ServerList(host, sessionId)
+	var list3 string
+	for _, s := range sList {
+		msg := fmt.Sprintf("server: %v", s)
+		list3 += msg + "\n"
+		log.Print(msg)
+	}
+
 	if errClose := nodeA10v2Close(w, r, host, sessionId); errClose != nil {
 		log.Printf(me+": method=%s url=%s from=%s close session_id=[%s] error: %v", r.Method, r.URL.Path, r.RemoteAddr, sessionId, errClose)
 		// log warning only
 	}
 
-	writeStr(me, w, "done: "+list1+list2)
+	writeStr(me, w, "done: "+list1+list2+list3)
 }
 
 type a10VServer struct {
@@ -135,6 +143,58 @@ type a10VServer struct {
 type a10ServiceGroup struct {
 	name    string
 	members []string
+}
+
+type a10Server struct {
+	name  string
+	host  string
+	ports []string
+}
+
+func a10ServerList(host, sessionId string) []a10Server {
+	var list []a10Server
+
+	servers, errGet := a10SessionGet(host, "slb.server.getAll", sessionId)
+	if errGet != nil {
+		return list
+	}
+
+	//log.Printf("servers: [%s]", string(servers))
+
+	sList := jsonExtractList(servers, "server_list")
+	if sList == nil {
+		return list
+	}
+
+	for _, s := range sList {
+		sMap, isMap := s.(map[string]interface{})
+		if !isMap {
+			continue
+		}
+
+		name := sMap["name"].(string)
+		host := sMap["host"].(string)
+		//host := "address=fixme"
+		server := a10Server{name: name, host: host}
+
+		portList := sMap["port_list"]
+		pList, isList := portList.([]interface{})
+		if !isList {
+			continue
+		}
+		for _, p := range pList {
+			pMap, isPMap := p.(map[string]interface{})
+			if !isPMap {
+				continue
+			}
+			portNum := pMap["port_num"]
+			server.ports = append(server.ports, fmt.Sprintf("%v", portNum))
+		}
+
+		list = append(list, server)
+	}
+
+	return list
 }
 
 func a10ServiceGroupList(host, sessionId string) []a10ServiceGroup {
