@@ -133,7 +133,8 @@ type a10VServer struct {
 }
 
 type a10ServiceGroup struct {
-	name string
+	name    string
+	members []string
 }
 
 func a10ServiceGroupList(host, sessionId string) []a10ServiceGroup {
@@ -158,8 +159,18 @@ func a10ServiceGroupList(host, sessionId string) []a10ServiceGroup {
 		}
 
 		name := sgMap["name"].(string)
+		group := a10ServiceGroup{name: name}
 
-		list = append(list, a10ServiceGroup{name})
+		memberList := sgMap["member_list"]
+		mList, isList := memberList.([]interface{})
+		if !isList {
+			continue
+		}
+		for _, m := range mList {
+			group.members = append(group.members, fmt.Sprintf("%v", m))
+		}
+
+		list = append(list, group)
 	}
 
 	return list
