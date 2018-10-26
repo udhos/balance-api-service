@@ -151,6 +151,20 @@ type a10Server struct {
 	ports []string
 }
 
+func mapGetStr(tab map[string]interface{}, key string) string {
+	value, found := tab[key]
+	if !found {
+		log.Printf("mapGetStr: key=[%s] not found", key)
+		return ""
+	}
+	str, isStr := value.(string)
+	if !isStr {
+		log.Printf("mapGetStr: key=[%s] non-string value: [%v]", key, value)
+		return ""
+	}
+	return str
+}
+
 func a10ServerList(host, sessionId string) []a10Server {
 	var list []a10Server
 
@@ -172,8 +186,8 @@ func a10ServerList(host, sessionId string) []a10Server {
 			continue
 		}
 
-		name := sMap["name"].(string)
-		host := sMap["host"].(string)
+		name := mapGetStr(sMap, "name")
+		host := mapGetStr(sMap, "host")
 		//host := "address=fixme"
 		server := a10Server{name: name, host: host}
 
@@ -218,7 +232,7 @@ func a10ServiceGroupList(host, sessionId string) []a10ServiceGroup {
 			continue
 		}
 
-		name := sgMap["name"].(string)
+		name := mapGetStr(sgMap, "name")
 		group := a10ServiceGroup{name: name}
 
 		memberList := sgMap["member_list"]
@@ -255,8 +269,8 @@ func a10VirtualServerList(host, sessionId string) []a10VServer {
 			continue
 		}
 
-		name := vsMap["name"].(string)
-		addr := vsMap["address"].(string)
+		name := mapGetStr(vsMap, "name")
+		addr := mapGetStr(vsMap, "address")
 		portList := vsMap["vport_list"]
 		pList, isList := portList.([]interface{})
 		if !isList {
@@ -269,7 +283,7 @@ func a10VirtualServerList(host, sessionId string) []a10VServer {
 			}
 			port := pMap["port"]
 			pStr := fmt.Sprintf("%v", port)
-			sGroup := pMap["service_group"].(string)
+			sGroup := mapGetStr(pMap, "service_group")
 			//log.Printf("virtual server name=[%s] address=[%s] port=[%s] service_group=[%s]", name, addr, pStr, sGroup)
 			list = append(list, a10VServer{name, addr, pStr, sGroup})
 		}
