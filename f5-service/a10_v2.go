@@ -104,57 +104,77 @@ func nodeA10v2RuleGet(w http.ResponseWriter, r *http.Request, username, password
 	}
 
 	vsList := a10VirtualServerList(host, sessionId)
-	list1 := "virtual servers: " + litter.Sdump(vsList) + "\n"
-	log.Printf(list1)
+	//list1 := "virtual servers: " + litter.Sdump(vsList) + "\n"
+	//log.Printf(list1)
 
 	sgList := a10ServiceGroupList(host, sessionId)
-	list2 := "service groups: " + litter.Sdump(sgList) + "\n"
-	log.Printf(list2)
+	//list2 := "service groups: " + litter.Sdump(sgList) + "\n"
+	//log.Printf(list2)
 
 	sList := a10ServerList(host, sessionId)
-	list3 := "servers: " + litter.Sdump(sList) + "\n"
-	log.Printf(list3)
+	//list3 := "servers: " + litter.Sdump(sList) + "\n"
+	//log.Printf(list3)
 
 	vList := []virtual{}
 	for _, vs := range vsList {
-		var p pool
-		for _, sg := range sgList {
-			if sg.Name == vs.ServiceGroup {
-				p.Name = sg.Name
-				break
+		v := virtual{Name: vs.Name, Address: vs.Address, Port: vs.Port}
+
+		for _, vsg := range vs.ServiceGroups {
+
+			//log.Printf("virtual_server=%s service_group=%s", vs.Name, vsg)
+
+			for _, sg := range sgList {
+				if sg.Name != vsg {
+					continue
+				}
+
+				//log.Printf("virtual_server=%s service_group=%s found service group", vs.Name, vsg)
+
+				p := pool{Name: vsg}
+
+				for _, sgm := range sg.Members {
+					for _, s := range sList {
+						if sgm.Name != s.Name {
+							continue
+						}
+						for _, port := range s.Ports {
+							p.Members = append(p.Members, server{Name: s.Name, Address: s.Host, Port: port})
+						}
+					}
+				}
+
+				v.Pools = append(v.Pools, p)
 			}
 		}
 
-		for _, s := range sList {
-			for _, port := range s.Ports {
-				log.Printf("FIXME WRITEME wrongly adding server=%s to pool=%s", s.Name+"/"+s.Host, p.Name)
-				p.Members = append(p.Members, server{Name: s.Name, Address: s.Host, Port: port})
-			}
-		}
-
-		v := virtual{Name: vs.Name, Address: vs.Address, Port: vs.Port, Pool: p}
 		vList = append(vList, v)
 	}
-	list4 := "API virtual: " + litter.Sdump(vList) + "\n"
+	//list4 := "API virtual: " + litter.Sdump(vList) + "\n"
 
 	if errClose := nodeA10v2Close(w, r, host, sessionId); errClose != nil {
 		log.Printf(me+": method=%s url=%s from=%s close session_id=[%s] error: %v", r.Method, r.URL.Path, r.RemoteAddr, sessionId, errClose)
 		// log warning only
 	}
 
-	writeStr(me, w, "done: "+list1+list2+list3+list4)
+	//writeStr(me, w, "done: "+list1+list2+list3+list4)
+	writeStr(me, w, litter.Sdump(vList))
 }
 
 type a10VServer struct {
-	Name         string
-	Address      string
-	Port         string
-	ServiceGroup string
+	Name          string
+	Address       string
+	Port          string
+	ServiceGroups []string
 }
 
 type a10ServiceGroup struct {
 	Name    string
-	Members []string
+	Members []a10SGMember
+}
+
+type a10SGMember struct {
+	Name string
+	Port string
 }
 
 type a10Server struct {
@@ -175,6 +195,15 @@ func mapGetStr(tab map[string]interface{}, key string) string {
 		return ""
 	}
 	return str
+}
+
+func mapGetValue(tab map[string]interface{}, key string) string {
+	value, found := tab[key]
+	if !found {
+		log.Printf("mapGetValue: key=[%s] not found", key)
+		return ""
+	}
+	return fmt.Sprintf("%v", value)
 }
 
 func a10ServerList(host, sessionId string) []a10Server {
@@ -202,6 +231,8 @@ func a10ServerList(host, sessionId string) []a10Server {
 		host := mapGetStr(sMap, "host")
 		server := a10Server{Name: name, Host: host}
 
+		log.Printf("server: %s", name)
+
 		portList := sMap["port_list"]
 		pList, isList := portList.([]interface{})
 		if !isList {
@@ -212,8 +243,8 @@ func a10ServerList(host, sessionId string) []a10Server {
 			if !isPMap {
 				continue
 			}
-			portNum := pMap["port_num"]
-			server.Ports = append(server.Ports, fmt.Sprintf("%v", portNum))
+			portNum := mapGetValue(pMap, "port_num")
+			server.Ports = append(server.Ports, portNum)
 		}
 
 		list = append(list, server)
@@ -230,7 +261,7 @@ func a10ServiceGroupList(host, sessionId string) []a10ServiceGroup {
 		return list
 	}
 
-	log.Printf("groups: [%s]", string(groups))
+	//log.Printf("groups: [%s]", string(groups))
 
 	sgList := jsonExtractList(groups, "service_group_list")
 	if sgList == nil {
@@ -246,13 +277,21 @@ func a10ServiceGroupList(host, sessionId string) []a10ServiceGroup {
 		name := mapGetStr(sgMap, "name")
 		group := a10ServiceGroup{Name: name}
 
+		log.Printf("service group: %s", name)
+
 		memberList := sgMap["member_list"]
 		mList, isList := memberList.([]interface{})
-		if !isList {
-			continue
-		}
-		for _, m := range mList {
-			group.Members = append(group.Members, fmt.Sprintf("%v", m))
+		if isList {
+			for _, m := range mList {
+				mMap, isMMap := m.(map[string]interface{})
+				if !isMMap {
+					continue
+				}
+				memberName := mapGetStr(mMap, "server")
+				memberPort := mapGetValue(mMap, "port")
+				member := a10SGMember{Name: memberName, Port: memberPort}
+				group.Members = append(group.Members, member)
+			}
 		}
 
 		list = append(list, group)
@@ -282,6 +321,11 @@ func a10VirtualServerList(host, sessionId string) []a10VServer {
 
 		name := mapGetStr(vsMap, "name")
 		addr := mapGetStr(vsMap, "address")
+
+		log.Printf("virtual server: %s", name)
+
+		vServer := a10VServer{Name: name, Address: addr}
+
 		portList := vsMap["vport_list"]
 		pList, isList := portList.([]interface{})
 		if !isList {
@@ -292,12 +336,15 @@ func a10VirtualServerList(host, sessionId string) []a10VServer {
 			if !isPMap {
 				continue
 			}
-			port := pMap["port"]
-			pStr := fmt.Sprintf("%v", port)
+			pStr := mapGetValue(pMap, "port")
 			sGroup := mapGetStr(pMap, "service_group")
-			//log.Printf("virtual server name=[%s] address=[%s] port=[%s] service_group=[%s]", name, addr, pStr, sGroup)
-			list = append(list, a10VServer{name, addr, pStr, sGroup})
+
+			vServer.Port = pStr
+			vServer.ServiceGroups = append(vServer.ServiceGroups, sGroup)
+			log.Printf("virtual server: %s service_group=%s", name, sGroup)
 		}
+
+		list = append(list, vServer)
 	}
 
 	return list

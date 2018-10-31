@@ -4,7 +4,7 @@ type virtual struct {
 	Name    string
 	Address string
 	Port    string
-	Pool    pool
+	Pools   []pool
 }
 
 type pool struct {
