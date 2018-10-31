@@ -157,7 +157,19 @@ func nodeA10v2RuleGet(w http.ResponseWriter, r *http.Request, username, password
 	}
 
 	//writeStr(me, w, "done: "+list1+list2+list3+list4)
-	writeStr(me, w, litter.Sdump(vList))
+	query := r.URL.Query()
+	if _, found := query["debug"]; found {
+		writeStr(me, w, litter.Sdump(vList))
+		return
+	}
+
+	buf, errMarshal := json.MarshalIndent(vList, "", " ")
+	if errMarshal != nil {
+		log.Printf(me+": method=%s url=%s from=%s session_id=[%s] json error: %v", r.Method, r.URL.Path, r.RemoteAddr, sessionId, errMarshal)
+		sendInternalError(me, w, r) // http 500
+		return
+	}
+	writeBuf(me, w, buf)
 }
 
 type a10VServer struct {

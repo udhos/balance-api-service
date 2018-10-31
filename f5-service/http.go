@@ -99,6 +99,13 @@ func writeStr(caller string, w http.ResponseWriter, s string) {
 	}
 }
 
+func writeBuf(caller string, w http.ResponseWriter, buf []byte) {
+	_, err := w.Write(buf)
+	if err != nil {
+		log.Printf("%s writeBuf: %v", caller, err)
+	}
+}
+
 func sendBadRequest(label, reason string, w http.ResponseWriter, r *http.Request) {
 	msg := fmt.Sprintf("%s: method=%s url=%s from=%s - bad request: %s", label, r.Method, r.URL.Path, r.RemoteAddr, reason)
 	log.Print(msg)
@@ -131,4 +138,10 @@ func sendNotImplemented(label string, w http.ResponseWriter, r *http.Request) {
 	log.Print(msg)
 
 	http.Error(w, label+" not implemented", http.StatusNotImplemented) // 501
+}
+
+func sendInternalError(label string, w http.ResponseWriter, r *http.Request) {
+	msg := fmt.Sprintf("%s: method=%s url=%s from=%s - internal server error", label, r.Method, r.URL.Path, r.RemoteAddr)
+	log.Print(msg)
+	http.Error(w, label+" not implemented", http.StatusInternalServerError) // 500
 }
