@@ -72,7 +72,7 @@ func nodeA10v2RuleGet(w http.ResponseWriter, r *http.Request, username, password
 
 	host := fields[0]
 
-	c := a10go.New(host)
+	c := a10go.New(host, a10go.Options{})
 
 	errLogin := c.Login(username, password)
 	if errLogin != nil {
