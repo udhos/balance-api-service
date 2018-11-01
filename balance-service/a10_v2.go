@@ -59,6 +59,8 @@ func handlerNodeA10v2(w http.ResponseWriter, r *http.Request, path string) {
 	switch r.Method {
 	case http.MethodGet:
 		nodeA10v2RuleGet(w, r, username, password, fields)
+	case http.MethodPut:
+		nodeA10v2RulePut(w, r, username, password, fields)
 	default:
 		w.Header().Set("Allow", "POST") // required by 405 error
 		http.Error(w, r.Method+" method not supported", 405)
@@ -80,17 +82,88 @@ func nodeA10v2RuleGet(w http.ResponseWriter, r *http.Request, username, password
 		http.Error(w, host+" bad gateway - auth", http.StatusBadGateway) // 502
 	}
 
+	vList := fetchVirtualList(c)
+
+	if errClose := c.Logout(); errClose != nil {
+		log.Printf(me+": method=%s url=%s from=%s close error: %v", r.Method, r.URL.Path, r.RemoteAddr, errClose)
+		// log warning only
+	}
+
+	query := r.URL.Query()
+	if _, found := query["debug"]; found {
+		writeStr(me, w, litter.Sdump(vList))
+		return
+	}
+
+	buf, errMarshal := json.MarshalIndent(vList, "", " ")
+	if errMarshal != nil {
+		log.Printf(me+": method=%s url=%s from=%s json error: %v", r.Method, r.URL.Path, r.RemoteAddr, errMarshal)
+		sendInternalError(me, w, r) // http 500
+		return
+	}
+	writeBuf(me, w, buf)
+}
+
+func nodeA10v2RulePut(w http.ResponseWriter, r *http.Request, username, password string, fields []string) {
+
+	me := "nodeA10v2RulePut"
+
+	var newList []virtual
+
+	dec := json.NewDecoder(r.Body)
+
+	errJson := dec.Decode(&newList)
+	if errJson != nil {
+		reason := fmt.Sprintf("json error: %v", errJson)
+		sendBadRequest(me, reason, w, r)
+		return
+	}
+
+	log.Printf("newList: %v", newList)
+
+	host := fields[0]
+
+	c := a10go.New(host, a10go.Options{})
+
+	errLogin := c.Login(username, password)
+	if errLogin != nil {
+		log.Printf(me+": method=%s url=%s from=%s auth: %v", r.Method, r.URL.Path, r.RemoteAddr, errLogin)
+		http.Error(w, host+" bad gateway - auth", http.StatusBadGateway) // 502
+	}
+
+	oldList := fetchVirtualList(c) // oldList: before change
+
+	log.Printf("oldList: %v", oldList)
+
+	// newList: perform change here
+
+	finalList := fetchVirtualList(c) // finalList: after change
+
+	if errClose := c.Logout(); errClose != nil {
+		log.Printf(me+": method=%s url=%s from=%s close error: %v", r.Method, r.URL.Path, r.RemoteAddr, errClose)
+		// log warning only
+	}
+
+	query := r.URL.Query()
+	if _, found := query["debug"]; found {
+		writeStr(me, w, litter.Sdump(finalList))
+		return
+	}
+
+	buf, errMarshal := json.MarshalIndent(finalList, "", " ")
+	if errMarshal != nil {
+		log.Printf(me+": method=%s url=%s from=%s json error: %v", r.Method, r.URL.Path, r.RemoteAddr, errMarshal)
+		sendInternalError(me, w, r) // http 500
+		return
+	}
+	writeBuf(me, w, buf)
+}
+
+func fetchVirtualList(c *a10go.Client) []virtual {
+
 	vsList := c.VirtualServerList()
-	//list1 := "virtual servers: " + litter.Sdump(vsList) + "\n"
-	//log.Printf(list1)
-
 	sgList := c.ServiceGroupList()
-	//list2 := "service groups: " + litter.Sdump(sgList) + "\n"
-	//log.Printf(list2)
-
 	sList := c.ServerList()
-	//list3 := "servers: " + litter.Sdump(sList) + "\n"
-	//log.Printf(list3)
 
 	vList := []virtual{}
 	for _, vs := range vsList {
@@ -98,14 +171,10 @@ func nodeA10v2RuleGet(w http.ResponseWriter, r *http.Request, username, password
 
 		for _, vsg := range vs.ServiceGroups {
 
-			//log.Printf("virtual_server=%s service_group=%s", vs.Name, vsg)
-
 			for _, sg := range sgList {
 				if sg.Name != vsg {
 					continue
 				}
-
-				//log.Printf("virtual_server=%s service_group=%s found service group", vs.Name, vsg)
 
 				p := pool{Name: vsg}
 
@@ -126,25 +195,6 @@ func nodeA10v2RuleGet(w http.ResponseWriter, r *http.Request, username, password
 
 		vList = append(vList, v)
 	}
-	//list4 := "API virtual: " + litter.Sdump(vList) + "\n"
 
-	if errClose := c.Logout(); errClose != nil {
-		log.Printf(me+": method=%s url=%s from=%s close error: %v", r.Method, r.URL.Path, r.RemoteAddr, errClose)
-		// log warning only
-	}
-
-	//writeStr(me, w, "done: "+list1+list2+list3+list4)
-	query := r.URL.Query()
-	if _, found := query["debug"]; found {
-		writeStr(me, w, litter.Sdump(vList))
-		return
-	}
-
-	buf, errMarshal := json.MarshalIndent(vList, "", " ")
-	if errMarshal != nil {
-		log.Printf(me+": method=%s url=%s from=%s json error: %v", r.Method, r.URL.Path, r.RemoteAddr, errMarshal)
-		sendInternalError(me, w, r) // http 500
-		return
-	}
-	writeBuf(me, w, buf)
+	return vList
 }
