@@ -89,6 +89,11 @@ func nodeA10v2RuleGet(w http.ResponseWriter, r *http.Request, username, password
 		// log warning only
 	}
 
+	sendVirtualList(me, w, r, vList)
+}
+
+func sendVirtualList(me string, w http.ResponseWriter, r *http.Request, vList []virtual) {
+
 	query := r.URL.Query()
 	if _, found := query["debug"]; found {
 		writeStr(me, w, litter.Sdump(vList))
@@ -144,19 +149,7 @@ func nodeA10v2RulePut(w http.ResponseWriter, r *http.Request, username, password
 		// log warning only
 	}
 
-	query := r.URL.Query()
-	if _, found := query["debug"]; found {
-		writeStr(me, w, litter.Sdump(finalList))
-		return
-	}
-
-	buf, errMarshal := json.MarshalIndent(finalList, "", " ")
-	if errMarshal != nil {
-		log.Printf(me+": method=%s url=%s from=%s json error: %v", r.Method, r.URL.Path, r.RemoteAddr, errMarshal)
-		sendInternalError(me, w, r) // http 500
-		return
-	}
-	writeBuf(me, w, buf)
+	sendVirtualList(me, w, r, finalList)
 }
 
 func fetchVirtualList(c *a10go.Client) []virtual {
