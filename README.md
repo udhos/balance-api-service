@@ -1,11 +1,18 @@
-# f5-api-service
+# balance-api-service
 
-# Recipe
+# Build
+
+    git clone https://github.com/udhos/balance-api-service
+    cd balance-api-service
+    go test ./balance-service
+    go install ./balance-service
+
+# Test Recipe
 
     curl -k -u admin:a10 http://192.168.56.20:8080/v1/at2/node/10.255.255.6/rule
     curl -k -u admin:a10 http://192.168.56.20:8080/v1/at3/node/10.255.255.6/rule
 
-# Recipe forward
+# Recipe forward for F5
 
     curl -sku admin:admin https://10.255.255.120/mgmt/tm/ltm/virtual/ | jq | less
     curl -sku admin:admin https://10.255.255.120/mgmt/tm/ltm/pool/ | jq | less
@@ -15,7 +22,7 @@
 
 https://devcentral.f5.com/wiki/iControlREST.HomePage.ashx
 
-# Methods
+# HTTP Methods
 
 https://stackoverflow.com/questions/630453/put-vs-post-in-rest
 
