@@ -12,4 +12,4 @@ build() {
 }
 
 build ./examples/f5-api-client
-build ./f5-service
+build ./balance-service
