@@ -10,3 +10,11 @@ github.com/stretchr/testify v1.2.2 h1:bSDNvY7ZPG5RlJ8otE/7V6gMiyenm9RtJ7IUVIAoJ1
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/udhos/a10-go-rest-client v0.0.0-20181101223751-801212c42ce3 h1:ZE8kXC6KcSLNYa2E3MxidAQuXfwGSa8t57xC9mOOSmk=
 github.com/udhos/a10-go-rest-client v0.0.0-20181101223751-801212c42ce3/go.mod h1:bgP1mtveiqIMdn41+OYqHtHWC/khYGNc/8Y3NgDLV3U=
+github.com/udhos/a10-go-rest-client v0.0.0-20181105190449-e597a7d2db82 h1:plKWuY+6cOUBH7uQc79vVf3Sz5UwLQbCEctmtZiUX3c=
+github.com/udhos/a10-go-rest-client v0.0.0-20181105190449-e597a7d2db82/go.mod h1:bgP1mtveiqIMdn41+OYqHtHWC/khYGNc/8Y3NgDLV3U=
+github.com/udhos/a10-go-rest-client v0.0.0-20181105193335-ee056612b9e8 h1:BqQ9jZ55BLDaUAmTZIvA7haLQfRYZqMSWv2CQ0/Osds=
+github.com/udhos/a10-go-rest-client v0.0.0-20181105193335-ee056612b9e8/go.mod h1:bgP1mtveiqIMdn41+OYqHtHWC/khYGNc/8Y3NgDLV3U=
+github.com/udhos/a10-go-rest-client v0.0.0-20181105195017-8b3bec24b5a2 h1:HwxZSmbvJCGZn479fysPyyHpUcTsOE5XhellV8aVvfc=
+github.com/udhos/a10-go-rest-client v0.0.0-20181105195017-8b3bec24b5a2/go.mod h1:bgP1mtveiqIMdn41+OYqHtHWC/khYGNc/8Y3NgDLV3U=
+github.com/udhos/a10-go-rest-client v0.0.0-20181105212136-8daa4b2b045d h1:Jedtw/Ff5D32YSIDg5VumknQNSR8rt25jsr90fFx5D4=
+github.com/udhos/a10-go-rest-client v0.0.0-20181105212136-8daa4b2b045d/go.mod h1:bgP1mtveiqIMdn41+OYqHtHWC/khYGNc/8Y3NgDLV3U=

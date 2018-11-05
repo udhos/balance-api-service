@@ -13,7 +13,8 @@ type pool struct {
 }
 
 type server struct {
-	Name    string
-	Address string
-	Port    string
+	Name     string
+	Address  string
+	Port     string
+	Protocol string
 }

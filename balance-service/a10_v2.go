@@ -177,7 +177,16 @@ func fetchVirtualList(c *a10go.Client) []virtual {
 							continue
 						}
 						for _, port := range s.Ports {
-							p.Members = append(p.Members, server{Name: s.Name, Address: s.Host, Port: port})
+							protoName := "unknown"
+							switch port.Protocol {
+							case "2":
+								protoName = "tcp"
+							case "3":
+								protoName = "tcp"
+							default:
+								protoName = "unknown:" + port.Protocol
+							}
+							p.Members = append(p.Members, server{Name: s.Name, Address: s.Host, Port: port.Number, Protocol: protoName})
 						}
 					}
 				}
