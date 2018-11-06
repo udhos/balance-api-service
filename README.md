@@ -9,6 +9,8 @@
 
 # Test Recipe
 
+    curl -u admin:a10 -X PUT --data-binary '@sample.txt' http://192.168.56.20:8080/v1/at2/node/10.255.255.6/rule
+
     curl -u admin:a10 -X PUT -d '[]' http://192.168.56.20:8080/v1/at2/node/10.255.255.6/rule
 
     curl -k -u admin:a10 http://192.168.56.20:8080/v1/at2/node/10.255.255.6/rule

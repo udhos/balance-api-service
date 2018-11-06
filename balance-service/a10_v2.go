@@ -142,6 +142,13 @@ func nodeA10v2RulePut(w http.ResponseWriter, r *http.Request, username, password
 
 	// newList: perform change here
 
+	log.Printf(me + ": remove stale virtual servers")
+	log.Printf(me + ": remove stale service groups")
+	log.Printf(me + ": remove stale servers")
+	log.Printf(me + ": create new servers")
+	log.Printf(me + ": create new service groups")
+	log.Printf(me + ": create new virtual servers")
+
 	finalList := fetchVirtualList(c) // finalList: after change
 
 	if errClose := c.Logout(); errClose != nil {

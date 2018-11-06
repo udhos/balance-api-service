@@ -1,0 +1,72 @@
+[
+ {
+  "Name": "virtual-server-everton",
+  "Address": "1.1.1.1",
+  "Port": "3000",
+  "Pools": [
+   {
+    "Name": "service-group-bogus-everton",
+    "Members": null
+   },
+   {
+    "Name": "service-group-everton",
+    "Members": [
+     {
+      "Name": "everton2",
+      "Address": "5.5.5.5",
+      "Port": "4444",
+      "Protocol": "tcp"
+     },
+     {
+      "Name": "everton2",
+      "Address": "5.5.5.5",
+      "Port": "55555",
+      "Protocol": "tcp"
+     },
+     {
+      "Name": "everton2",
+      "Address": "5.5.5.5",
+      "Port": "5555",
+      "Protocol": "tcp"
+     },
+     {
+      "Name": "everton",
+      "Address": "4.4.4.4",
+      "Port": "2222",
+      "Protocol": "tcp"
+     },
+     {
+      "Name": "everton",
+      "Address": "4.4.4.4",
+      "Port": "4444",
+      "Protocol": "tcp"
+     },
+     {
+      "Name": "s3",
+      "Address": "3.3.3.3",
+      "Port": "3333",
+      "Protocol": "tcp"
+     },
+     {
+      "Name": "s2",
+      "Address": "2.2.2.2",
+      "Port": "80",
+      "Protocol": "tcp"
+     },
+     {
+      "Name": "s2",
+      "Address": "2.2.2.2",
+      "Port": "22",
+      "Protocol": "tcp"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "Name": "virtualserver-bogus-everton",
+  "Address": "9.9.9.9",
+  "Port": "1111",
+  "Pools": null
+ }
+]
