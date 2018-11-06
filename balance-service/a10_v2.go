@@ -144,7 +144,25 @@ func nodeA10v2RulePut(w http.ResponseWriter, r *http.Request, username, password
 
 	log.Printf(me + ": remove stale virtual servers")
 	log.Printf(me + ": remove stale service groups")
+
 	log.Printf(me + ": remove stale servers")
+	serversOld := serverNames(oldList)
+	serversNew := serverNames(newList)
+	log.Printf(me+": remove stale servers - existing: %v", serversOld)
+	log.Printf(me+": remove stale servers - new: %v", serversNew)
+	serversNewTab := map[string]struct{}{}
+	for _, s := range serversNew {
+		serversNewTab[s] = struct{}{}
+	}
+	var serversRemoveCount int
+	for _, s := range serversOld {
+		if _, found := serversNewTab[s]; !found {
+			log.Printf(me+": remove stale servers - remove server=%s", s)
+			serversRemoveCount++
+		}
+	}
+	log.Printf(me+": remove stale servers - remove count=%d", serversRemoveCount)
+
 	log.Printf(me + ": create new servers")
 	log.Printf(me + ": create new service groups")
 	log.Printf(me + ": create new virtual servers")
