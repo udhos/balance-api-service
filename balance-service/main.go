@@ -25,7 +25,7 @@ func main() {
 
 	var debug bool
 	if os.Getenv("DEBUG") != "" {
-		debug = false
+		debug = true
 	}
 	log.Printf("debug=%v DEBUG=[%s]", debug, os.Getenv("DEBUG"))
 
