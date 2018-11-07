@@ -161,11 +161,19 @@ func fetchVirtualList(c *a10go.Client) []virtual {
 	sgList := c.ServiceGroupList()
 	sList := c.ServerList()
 
+	log.Printf("fetchVirtualList: total: vServers=%d groups=%d servers=%d", len(vsList), len(sgList), len(sList))
+
+	var countGroups, countServers int
+
 	vList := []virtual{}
 	for _, vs := range vsList {
 		v := virtual{Name: vs.Name, Address: vs.Address}
 
+		//log.Printf("fetchVirtualList: v=%s", vs.Name)
+
 		for _, vp := range vs.VirtualPorts {
+
+			//log.Printf("fetchVirtualList: v=%s p=%s", vs.Name, vp.Port)
 
 			for _, sg := range sgList {
 				if sg.Name != vp.ServiceGroup {
@@ -174,26 +182,36 @@ func fetchVirtualList(c *a10go.Client) []virtual {
 
 				p := pool{Name: vp.ServiceGroup, Port: vp.Port, Protocol: vp.Protocol}
 
+				//log.Printf("fetchVirtualList: v=%s p=%s g=%s", vs.Name, vp.Port, sg.Name)
+
 				for _, sgm := range sg.Members {
 					for _, s := range sList {
 						if sgm.Name != s.Name {
 							continue
 						}
+
+						//log.Printf("fetchVirtualList: v=%s p=%s g=%s m=%s", vs.Name, vp.Port, sg.Name, sgm.Name)
+
 						host := server{Name: s.Name, Address: s.Host}
 						for _, port := range s.Ports {
+							//log.Printf("fetchVirtualList: v=%s p=%s g=%s m=%s p=%s", vs.Name, vp.Port, sg.Name, sgm.Name, port.Number)
 							protoName := A10ProtocolName(port.Protocol)
 							host.Ports = append(host.Ports, serverPort{Port: port.Number, Protocol: protoName})
 						}
 						p.Members = append(p.Members, host)
+						countServers++
 					}
 				}
 
 				v.Pools = append(v.Pools, p)
+				countGroups++
 			}
 		}
 
 		vList = append(vList, v)
 	}
+
+	log.Printf("fetchVirtualList: linked: vServers=%d groups=%d servers=%d", len(vsList), countGroups, countServers)
 
 	return vList
 }
