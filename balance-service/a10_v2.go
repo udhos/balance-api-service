@@ -185,22 +185,23 @@ func fetchVirtualList(c *a10go.Client) []virtual {
 
 	vList := []virtual{}
 	for _, vs := range vsList {
-		v := virtual{Name: vs.Name, Address: vs.Address, Port: vs.Port}
+		v := virtual{Name: vs.Name, Address: vs.Address}
 
-		for _, vsg := range vs.ServiceGroups {
+		for _, vp := range vs.VirtualPorts {
 
 			for _, sg := range sgList {
-				if sg.Name != vsg {
+				if sg.Name != vp.ServiceGroup {
 					continue
 				}
 
-				p := pool{Name: vsg}
+				p := pool{Name: vp.ServiceGroup, Port: vp.Port, Protocol: vp.Protocol}
 
 				for _, sgm := range sg.Members {
 					for _, s := range sList {
 						if sgm.Name != s.Name {
 							continue
 						}
+						host := server{Name: s.Name, Address: s.Host}
 						for _, port := range s.Ports {
 							protoName := "unknown"
 							switch port.Protocol {
@@ -211,8 +212,9 @@ func fetchVirtualList(c *a10go.Client) []virtual {
 							default:
 								protoName = "unknown:" + port.Protocol
 							}
-							p.Members = append(p.Members, server{Name: s.Name, Address: s.Host, Port: port.Number, Protocol: protoName})
+							host.Ports = append(host.Ports, serverPort{Port: port.Number, Protocol: protoName})
 						}
+						p.Members = append(p.Members, host)
 					}
 				}
 

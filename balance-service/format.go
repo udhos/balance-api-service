@@ -2,21 +2,26 @@ package main
 
 type virtual struct {
 	Name    string
-	Address string
-	Port    string
+	Address string // listen addr
 	Pools   []pool
 }
 
 type pool struct {
-	Name    string
-	Members []server
+	Port     string   // listen port
+	Protocol string   // listen proto
+	Name     string   // pool name
+	Members  []server // backend servers
 }
 
 type server struct {
-	Name     string
-	Address  string
-	Port     string
-	Protocol string
+	Name    string
+	Address string       // backend server address
+	Ports   []serverPort // backend server port/proto
+}
+
+type serverPort struct {
+	Port     string // backend server port
+	Protocol string // backend server proto
 }
 
 // serverNames extracts server names from virtual list
