@@ -31,13 +31,18 @@ func main() {
 	if os.Getenv("SHOW_PASSWORDS") != "" {
 		showPasswords = true
 	}
-
 	log.Printf("showPasswords=%v SHOW_PASSWORDS=[%s]", showPasswords, os.Getenv("SHOW_PASSWORDS"))
+
+	dry := true
+	if os.Getenv("NO_DRY") != "" {
+		dry = false
+	}
+	log.Printf("dry=%v NO_DRY=[%s]", dry, os.Getenv("NO_DRY"))
 
 	register("/", func(w http.ResponseWriter, r *http.Request) { handlerRoot(w, r, "/") })
 
 	register("/v1/ff/node/", func(w http.ResponseWriter, r *http.Request) { handlerNodeF5(w, r, "/v1/ff/node/") })
-	register("/v1/at2/node/", func(w http.ResponseWriter, r *http.Request) { handlerNodeA10v2(w, r, "/v1/at2/node/") })
+	register("/v1/at2/node/", func(w http.ResponseWriter, r *http.Request) { handlerNodeA10v2(dry, w, r, "/v1/at2/node/") })
 	register("/v1/at3/node/", func(w http.ResponseWriter, r *http.Request) { handlerNodeA10v3(w, r, "/v1/at3/node/") })
 
 	log.Printf("serving HTTP on TCP %s LISTEN=[%s]", addr, os.Getenv("LISTEN"))

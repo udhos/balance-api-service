@@ -39,3 +39,39 @@ func listNames(vsList []virtual) (servers, groups, vServers []string) {
 
 	return
 }
+
+func findServer(vsList []virtual, name string) server {
+	for _, vs := range vsList {
+		for _, p := range vs.Pools {
+			for _, m := range p.Members {
+				if m.Name == name {
+					return m
+				}
+			}
+		}
+	}
+
+	return server{}
+}
+
+func findPool(vsList []virtual, name string) pool {
+	for _, vs := range vsList {
+		for _, p := range vs.Pools {
+			if p.Name == name {
+				return p
+			}
+		}
+	}
+
+	return pool{}
+}
+
+func findVirtual(vsList []virtual, name string) virtual {
+	for _, vs := range vsList {
+		if vs.Name == name {
+			return vs
+		}
+	}
+
+	return virtual{}
+}

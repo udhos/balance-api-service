@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/udhos/a10-go-rest-client/a10go"
@@ -38,49 +39,97 @@ func put(c *a10go.Client, oldList, newList []virtual) {
 	log.Printf(me+": vServers - create: %v", vServersCreate)
 	log.Printf(me+": vServers - update: %v", vServersUpdate)
 
+	debug := true
+
 	// 1. delete virtual servers
-	putVServersDelete(c, vServersDelete)
+	putVServersDelete(debug, c, vServersDelete)
 	// 2. delete service groups
-	putGroupsDelete(c, groupsDelete)
+	putGroupsDelete(debug, c, groupsDelete)
 	// 3. delete servers
-	putServersDelete(c, serversDelete)
+	putServersDelete(debug, c, serversDelete)
 	// 4. update servers
-	putServersUpdate(c, serversUpdate, newList)
+	putServersUpdate(debug, c, serversUpdate, newList)
 	// 5. create servers
-	putServersCreate(c, serversCreate, newList)
+	putServersCreate(debug, c, serversCreate, newList)
 	// 6. update service groups  - after 5
-	putGroupsUpdate(c, groupsUpdate, newList)
+	putGroupsUpdate(debug, c, groupsUpdate, newList)
 	// 7. create service groups  - after 5
-	putGroupsCreate(c, groupsCreate, newList)
+	putGroupsCreate(debug, c, groupsCreate, newList)
 	// 8. update virtual servers - after 7
-	putVServersUpdate(c, vServersUpdate, newList)
+	putVServersUpdate(debug, c, vServersUpdate, newList)
 	// 9. create virtual servers - after 7
-	putVServersCreate(c, vServersCreate, newList)
+	putVServersCreate(debug, c, vServersCreate, newList)
 }
 
-func putVServersDelete(c *a10go.Client, serversDelete []string) {
+func putVServersDelete(debug bool, c *a10go.Client, names []string) {
+	for _, s := range names {
+		if debug {
+			log.Printf("putVServersDelete: %s", s)
+		}
+		if err := c.VirtualServerDelete(s); err != nil {
+			log.Printf("putVServersDelete: %s: %v", s, err)
+		}
+	}
 }
 
-func putGroupsDelete(c *a10go.Client, groupsDelete []string) {
+func putGroupsDelete(debug bool, c *a10go.Client, names []string) {
+	for _, s := range names {
+		if debug {
+			log.Printf("putGroupsDelete: %s", s)
+		}
+		if err := c.ServiceGroupDelete(s); err != nil {
+			log.Printf("putGroupsDelete: %s: %v", s, err)
+		}
+	}
 }
 
-func putServersDelete(c *a10go.Client, serversDelete []string) {
+func putServersDelete(debug bool, c *a10go.Client, names []string) {
+	for _, s := range names {
+		if debug {
+			log.Printf("putServersDelete: %s", s)
+		}
+		if err := c.ServerDelete(s); err != nil {
+			log.Printf("putServersDelete: %s: %v", s, err)
+		}
+	}
 }
 
-func putServersUpdate(c *a10go.Client, serversUpdate []string, newList []virtual) {
+func putServersUpdate(debug bool, c *a10go.Client, names []string, newList []virtual) {
+	serversCreateUpdate("putServersUpdate", c.ServerUpdate, debug, c, names, newList)
 }
 
-func putServersCreate(c *a10go.Client, serversCreate []string, newList []virtual) {
+func putServersCreate(debug bool, c *a10go.Client, names []string, newList []virtual) {
+	serversCreateUpdate("putServersCreate", c.ServerCreate, debug, c, names, newList)
 }
 
-func putGroupsUpdate(c *a10go.Client, groupsUpdate []string, newList []virtual) {
+func serversCreateUpdate(label string, call func(string, string, []string) error, debug bool, c *a10go.Client, names []string, newList []virtual) {
+	for _, s := range names {
+		if debug {
+			log.Printf("%s: %s", label, s)
+		}
+		host := findServer(newList, s)
+		if host.Name == "" {
+			log.Printf("%s: %s: not found", label, s)
+			continue
+		}
+		var portList []string
+		for _, p := range host.Ports {
+			portList = append(portList, fmt.Sprintf("%s,%s", p.Port, p.Protocol))
+		}
+		if err := call(host.Name, host.Address, portList); err != nil {
+			log.Printf("%s: %s: %v", label, host.Name, err)
+		}
+	}
 }
 
-func putGroupsCreate(c *a10go.Client, groupsCreate []string, newList []virtual) {
+func putGroupsUpdate(debug bool, c *a10go.Client, names []string, newList []virtual) {
 }
 
-func putVServersUpdate(c *a10go.Client, vServersUpdate []string, newList []virtual) {
+func putGroupsCreate(debug bool, c *a10go.Client, names []string, newList []virtual) {
 }
 
-func putVServersCreate(c *a10go.Client, vServersCreate []string, newList []virtual) {
+func putVServersUpdate(debug bool, c *a10go.Client, names []string, newList []virtual) {
+}
+
+func putVServersCreate(debug bool, c *a10go.Client, names []string, newList []virtual) {
 }

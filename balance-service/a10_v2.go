@@ -14,7 +14,7 @@ import (
 // /v1/at/node/<host>/rule/<rule>
 // ^^^^^^^^^^^^
 // prefix
-func handlerNodeA10v2(w http.ResponseWriter, r *http.Request, path string) {
+func handlerNodeA10v2(dry bool, w http.ResponseWriter, r *http.Request, path string) {
 
 	me := "handlerNodeA10v2"
 
@@ -60,7 +60,7 @@ func handlerNodeA10v2(w http.ResponseWriter, r *http.Request, path string) {
 	case http.MethodGet:
 		nodeA10v2RuleGet(w, r, username, password, fields)
 	case http.MethodPut:
-		nodeA10v2RulePut(w, r, username, password, fields)
+		nodeA10v2RulePut(dry, w, r, username, password, fields)
 	default:
 		w.Header().Set("Allow", "POST") // required by 405 error
 		http.Error(w, r.Method+" method not supported", 405)
@@ -109,7 +109,7 @@ func sendVirtualList(me string, w http.ResponseWriter, r *http.Request, vList []
 	writeBuf(me, w, buf)
 }
 
-func nodeA10v2RulePut(w http.ResponseWriter, r *http.Request, username, password string, fields []string) {
+func nodeA10v2RulePut(dry bool, w http.ResponseWriter, r *http.Request, username, password string, fields []string) {
 
 	me := "nodeA10v2RulePut"
 
@@ -128,7 +128,7 @@ func nodeA10v2RulePut(w http.ResponseWriter, r *http.Request, username, password
 
 	host := fields[0]
 
-	c := a10go.New(host, a10go.Options{})
+	c := a10go.New(host, a10go.Options{Dry: dry})
 
 	errLogin := c.Login(username, password)
 	if errLogin != nil {
