@@ -23,6 +23,12 @@ func main() {
 
 	log.Printf("%s %s runtime %s GOMAXPROCS=%d", me, version, runtime.Version(), runtime.GOMAXPROCS(0))
 
+	var debug bool
+	if os.Getenv("DEBUG") != "" {
+		debug = false
+	}
+	log.Printf("debug=%v DEBUG=[%s]", debug, os.Getenv("DEBUG"))
+
 	addr := os.Getenv("LISTEN")
 	if addr == "" {
 		addr = ":8080"
@@ -42,7 +48,7 @@ func main() {
 	register("/", func(w http.ResponseWriter, r *http.Request) { handlerRoot(w, r, "/") })
 
 	register("/v1/ff/node/", func(w http.ResponseWriter, r *http.Request) { handlerNodeF5(w, r, "/v1/ff/node/") })
-	register("/v1/at2/node/", func(w http.ResponseWriter, r *http.Request) { handlerNodeA10v2(dry, w, r, "/v1/at2/node/") })
+	register("/v1/at2/node/", func(w http.ResponseWriter, r *http.Request) { handlerNodeA10v2(debug, dry, w, r, "/v1/at2/node/") })
 	register("/v1/at3/node/", func(w http.ResponseWriter, r *http.Request) { handlerNodeA10v3(w, r, "/v1/at3/node/") })
 
 	log.Printf("serving HTTP on TCP %s LISTEN=[%s]", addr, os.Getenv("LISTEN"))
