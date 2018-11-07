@@ -1,5 +1,9 @@
 package main
 
+import (
+	"log"
+)
+
 type virtual struct {
 	Name    string
 	Address string // listen addr
@@ -22,6 +26,34 @@ type server struct {
 type serverPort struct {
 	Port     string // backend server port
 	Protocol string // backend server proto
+}
+
+func A10ProtocolName(number string) string {
+	protoName := "unknown"
+	switch number {
+	case "2":
+		protoName = "tcp"
+	case "3":
+		protoName = "udp"
+	default:
+		log.Printf("A10ProtocolName: error: [%s]", number)
+		protoName = "unknown:" + number
+	}
+	return protoName
+}
+
+func A10ProtocolNumber(name string) string {
+	number := "unknown"
+	switch name {
+	case "tcp":
+		number = "2"
+	case "udp":
+		number = "3"
+	default:
+		log.Printf("A10ProtocolNumber: error: [%s]", name)
+		number = "unknown:" + name
+	}
+	return number
 }
 
 // listNames extracts all names from virtual list

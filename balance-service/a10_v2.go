@@ -128,7 +128,9 @@ func nodeA10v2RulePut(dry bool, w http.ResponseWriter, r *http.Request, username
 
 	host := fields[0]
 
-	c := a10go.New(host, a10go.Options{Dry: dry})
+	debug := true
+	log.Printf("nodeA10v2RulePut: debug=%v", debug)
+	c := a10go.New(host, a10go.Options{Debug: debug, Dry: dry})
 
 	errLogin := c.Login(username, password)
 	if errLogin != nil {
@@ -180,15 +182,7 @@ func fetchVirtualList(c *a10go.Client) []virtual {
 						}
 						host := server{Name: s.Name, Address: s.Host}
 						for _, port := range s.Ports {
-							protoName := "unknown"
-							switch port.Protocol {
-							case "2":
-								protoName = "tcp"
-							case "3":
-								protoName = "udp"
-							default:
-								protoName = "unknown:" + port.Protocol
-							}
+							protoName := A10ProtocolName(port.Protocol)
 							host.Ports = append(host.Ports, serverPort{Port: port.Number, Protocol: protoName})
 						}
 						p.Members = append(p.Members, host)

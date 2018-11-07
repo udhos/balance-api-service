@@ -114,7 +114,7 @@ func serversCreateUpdate(label string, call func(string, string, []string) error
 		}
 		var portList []string
 		for _, p := range host.Ports {
-			portList = append(portList, fmt.Sprintf("%s,%s", p.Port, p.Protocol))
+			portList = append(portList, fmt.Sprintf("%s,%s", p.Port, A10ProtocolNumber(p.Protocol)))
 		}
 		if err := call(host.Name, host.Address, portList); err != nil {
 			log.Printf("%s: %s: %v", label, host.Name, err)
@@ -143,7 +143,7 @@ func groupsCreateUpdate(label string, call func(string, string, []string) error,
 		var portList []string // port = "serverName,portNumber,portProtocol"
 		for _, member := range p.Members {
 			for _, mp := range member.Ports {
-				portList = append(portList, fmt.Sprintf("%s,%s,%s", member.Name, mp.Port, mp.Protocol))
+				portList = append(portList, fmt.Sprintf("%s,%s,%s", member.Name, mp.Port, A10ProtocolNumber(mp.Protocol)))
 			}
 		}
 		if err := call(p.Name, p.Protocol, portList); err != nil {
