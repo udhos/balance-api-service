@@ -57,19 +57,31 @@ func A10ProtocolNumber(name string) string {
 }
 
 // listNames extracts all names from virtual list
-func listNames(vsList []virtual) (servers, groups, vServers []string) {
+func listNames(vsList []virtual) ([]string, []string, []string) {
+
+	serverTab := map[string]struct{}{}
+	groupTab := map[string]struct{}{}
+	vServerTab := map[string]struct{}{}
 
 	for _, vs := range vsList {
-		vServers = append(vServers, vs.Name)
+		vServerTab[vs.Name] = struct{}{}
 		for _, p := range vs.Pools {
-			groups = append(groups, p.Name)
+			groupTab[p.Name] = struct{}{}
 			for _, m := range p.Members {
-				servers = append(servers, m.Name)
+				serverTab[m.Name] = struct{}{}
 			}
 		}
 	}
 
-	return
+	return mapKeys(serverTab), mapKeys(groupTab), mapKeys(vServerTab)
+}
+
+func mapKeys(tab map[string]struct{}) []string {
+	var keys []string
+	for k := range tab {
+		keys = append(keys, k)
+	}
+	return keys
 }
 
 func findServer(vsList []virtual, name string) server {
