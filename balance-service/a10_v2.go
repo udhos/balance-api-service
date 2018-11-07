@@ -208,7 +208,7 @@ func fetchVirtualList(c *a10go.Client) []virtual {
 							case "2":
 								protoName = "tcp"
 							case "3":
-								protoName = "tcp"
+								protoName = "udp"
 							default:
 								protoName = "unknown:" + port.Protocol
 							}
