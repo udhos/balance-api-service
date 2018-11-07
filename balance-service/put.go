@@ -146,6 +146,7 @@ func groupsCreateUpdate(label string, call func(string, string, []string) error,
 				portList = append(portList, fmt.Sprintf("%s,%s,%s", member.Name, mp.Port, A10ProtocolNumber(mp.Protocol)))
 			}
 		}
+		log.Printf("debug %s: %s: pool=%v portList=%v", label, p.Name, p, portList)
 		if err := call(p.Name, p.Protocol, portList); err != nil {
 			log.Printf("%s: %s: %v", label, p.Name, err)
 		}
