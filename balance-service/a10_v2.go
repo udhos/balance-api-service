@@ -142,22 +142,7 @@ func nodeA10v2RulePut(w http.ResponseWriter, r *http.Request, username, password
 
 	// newList: perform change here
 
-	log.Printf(me + ": remove stale virtual servers")
-	log.Printf(me + ": remove stale service groups")
-
-	// servers
-	serversOld := serverNames(oldList)
-	serversNew := serverNames(newList)
-	log.Printf(me+": servers - existing: %v", serversOld)
-	log.Printf(me+": servers - new: %v", serversNew)
-	serversDelete, serversCreate, serversUpdate := compareSets(serversOld, serversNew)
-	log.Printf(me+": servers - delete: %v", serversDelete)
-	log.Printf(me+": servers - create: %v", serversCreate)
-	log.Printf(me+": servers - update: %v", serversUpdate)
-
-	log.Printf(me + ": create new servers")
-	log.Printf(me + ": create new service groups")
-	log.Printf(me + ": create new virtual servers")
+	put(c, oldList, newList)
 
 	finalList := fetchVirtualList(c) // finalList: after change
 

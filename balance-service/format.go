@@ -24,17 +24,18 @@ type serverPort struct {
 	Protocol string // backend server proto
 }
 
-// serverNames extracts server names from virtual list
-func serverNames(vsList []virtual) []string {
-	var servers []string
+// listNames extracts all names from virtual list
+func listNames(vsList []virtual) (servers, groups, vServers []string) {
 
 	for _, vs := range vsList {
+		vServers = append(vServers, vs.Name)
 		for _, p := range vs.Pools {
+			groups = append(groups, p.Name)
 			for _, m := range p.Members {
 				servers = append(servers, m.Name)
 			}
 		}
 	}
 
-	return servers
+	return
 }
