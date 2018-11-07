@@ -153,7 +153,29 @@ func groupsCreateUpdate(label string, call func(string, string, []string) error,
 }
 
 func putVServersUpdate(debug bool, c *a10go.Client, names []string, newList []virtual) {
+	vServersCreateUpdate("putVServersUpdate", c.VirtualServerUpdate, debug, c, names, newList)
 }
 
 func putVServersCreate(debug bool, c *a10go.Client, names []string, newList []virtual) {
+	vServersCreateUpdate("putVServersCreate", c.VirtualServerCreate, debug, c, names, newList)
+}
+
+func vServersCreateUpdate(label string, call func(string, string, []string) error, debug bool, c *a10go.Client, names []string, newList []virtual) {
+	for _, s := range names {
+		if debug {
+			log.Printf("%s: %s", label, s)
+		}
+		vs := findVirtual(newList, s)
+		if vs.Name == "" {
+			log.Printf("%s: %s: not found", label, s)
+			continue
+		}
+		var virtualPorts []string // virtualPort = "serviceGroup,port,protocol"
+		for _, p := range vs.Pools {
+			virtualPorts = append(virtualPorts, fmt.Sprintf("%s,%s,%s", p.Name, p.Port, A10ProtocolNumber(p.Protocol)))
+		}
+		if err := call(vs.Name, vs.Address, virtualPorts); err != nil {
+			log.Printf("%s: %s: %v", label, vs.Name, err)
+		}
+	}
 }
