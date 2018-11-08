@@ -10,6 +10,8 @@ import (
 )
 
 // backend is the main type for the /backend/ route
+// A10 full backend path is:
+// virtual server -> virtual port (within virtual server) -> service group -> backend
 type backend struct {
 	VirtualServers []backendVirtualServer
 	ServiceGroups  []backendServiceGroup
@@ -18,6 +20,9 @@ type backend struct {
 	BackendPorts   []backendPort
 }
 
+// FIXME:
+// bvs for for backend1 should be distinct from bvs for backend2
+// because backend1 should report in its parent VS only VirtualPorts from its path
 type backendVirtualServer struct {
 	Name         string
 	Address      string
