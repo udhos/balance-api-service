@@ -10,14 +10,13 @@ import (
 )
 
 type backend struct {
-	VirtualServerName     string
-	VirtualServerAddress  string
-	VirtualServerPort     string
-	VirtualServerProtocol string
-	ServiceGroups         []backendServiceGroup
-	BackendName           string
-	BackendAddress        string
-	BackendPorts          []backendPort
+	VirtualServerName    string
+	VirtualServerAddress string
+	VirtualServerPorts   []backendPort
+	ServiceGroups        []backendServiceGroup
+	BackendName          string
+	BackendAddress       string
+	BackendPorts         []backendPort
 }
 
 type backendServiceGroup struct {
@@ -158,18 +157,24 @@ func fetchBackendTable(c *a10go.Client) map[string]*backend {
 	// this loop is UNABLE to find service groups detached from virtual servers
 	for _, vs := range vsList {
 		log.Printf("fetchBackendTable: vserver=%s", vs.Name)
+		portDedupTab := map[string]struct{}{}
 		for _, vp := range vs.VirtualPorts {
 			sg, found := groupTab[vp.ServiceGroup]
 			if !found {
 				log.Printf("fetchBackendTable: vserver=%s group=%s not found", vs.Name, vp.ServiceGroup)
 				continue
 			}
+			portProtoName := A10ProtocolName(vp.Protocol)
+			portDedupKey := vp.Port + " " + portProtoName
 			for _, sgm := range sg.Members {
 				if b, found := backendTab[sgm.Name]; found {
 					b.VirtualServerName = vs.Name
 					b.VirtualServerAddress = vs.Address
-					b.VirtualServerPort = vp.Port
-					b.VirtualServerProtocol = A10ProtocolName(vp.Protocol)
+					if _, dup := portDedupTab[portDedupKey]; dup {
+						continue
+					}
+					portDedupTab[portDedupKey] = struct{}{} // mark port as added
+					b.VirtualServerPorts = append(b.VirtualServerPorts, backendPort{Port: vp.Port, Protocol: portProtoName})
 				}
 			}
 		}
