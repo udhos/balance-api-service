@@ -12,7 +12,7 @@ import (
 )
 
 // /v1/at/node/<host>/rule/
-// /v1/at/node/<host>/server/
+// /v1/at/node/<host>/backend/
 // ^^^^^^^^^^^^
 // prefix
 func handlerNodeA10v2(debug, dry bool, w http.ResponseWriter, r *http.Request, path string) {
@@ -55,8 +55,8 @@ func handlerNodeA10v2(debug, dry bool, w http.ResponseWriter, r *http.Request, p
 	switch optionField {
 	case "rule":
 		nodeA10v2Rule(debug, dry, w, r, username, password, fields)
-	case "server":
-		nodeA10v2Server(debug, dry, w, r, username, password, fields)
+	case "backend":
+		nodeA10v2Backend(debug, dry, w, r, username, password, fields)
 	default:
 		reason := fmt.Sprintf("missing option field: [%s]", optionField)
 		sendBadRequest(me, reason, w, r)

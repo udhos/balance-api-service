@@ -92,6 +92,13 @@ func clientGet(c *http.Client, url string) ([]byte, error) {
 	return info, errRead
 }
 
+func writeLine(caller string, w http.ResponseWriter) {
+	_, err := io.WriteString(w, "\n")
+	if err != nil {
+		log.Printf("%s writeLine: %v", caller, err)
+	}
+}
+
 func writeStr(caller string, w http.ResponseWriter, s string) {
 	_, err := io.WriteString(w, s)
 	if err != nil {
