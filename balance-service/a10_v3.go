@@ -45,7 +45,7 @@ func handlerNodeA10v3(w http.ResponseWriter, r *http.Request, path string) {
 
 	ruleField := fields[1]
 	if ruleField != "rule" {
-		reason := fmt.Sprintf("missing fule field: [%s]", ruleField)
+		reason := fmt.Sprintf("missing rule field: [%s]", ruleField)
 		sendBadRequest(me, reason, w, r)
 		return
 	}
