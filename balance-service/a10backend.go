@@ -69,9 +69,9 @@ func nodeA10v2BackendGet(w http.ResponseWriter, r *http.Request, username, passw
 	sendBackendList(me, w, r, backendTab)
 }
 
-func sendBackendList(me string, w http.ResponseWriter, r *http.Request, tab map[string]backend) {
+func sendBackendList(me string, w http.ResponseWriter, r *http.Request, tab map[string]*backend) {
 
-	list := []backend{}
+	list := []*backend{}
 
 	for _, b := range tab {
 		list = append(list, b)
@@ -106,11 +106,15 @@ func nodeA10v2BackendPut(debug, dry bool, w http.ResponseWriter, r *http.Request
 	writeStr(me, w, "backend PUT hello\n")
 }
 
-func fetchBackendTable(c *a10go.Client) map[string]backend {
-	tab := map[string]backend{}
+func fetchBackendTable(c *a10go.Client) map[string]*backend {
+	backendTab := map[string]*backend{}
 
+	// collect all information from A10
 	sList := c.ServerList()
+	vsList := c.VirtualServerList()
+	sgList := c.ServiceGroupList()
 
+	// build backend table
 	for _, s := range sList {
 		b := backend{
 			BackendName:    s.Name,
@@ -119,8 +123,43 @@ func fetchBackendTable(c *a10go.Client) map[string]backend {
 		for _, p := range s.Ports {
 			b.BackendPorts = append(b.BackendPorts, backendPort{Port: p.Number, Protocol: A10ProtocolName(p.Protocol)})
 		}
-		tab[b.BackendName] = b
+		backendTab[b.BackendName] = &b
 	}
 
-	return tab
+	// scan service group table
+	// this loop IS able to find all service groups (including those ones detached from virtual servers)
+	groupTab := map[string]a10go.A10ServiceGroup{}
+	for _, sg := range sgList {
+		groupTab[sg.Name] = sg
+		for _, sgm := range sg.Members {
+			b, found := backendTab[sgm.Name]
+			log.Printf("fetchBackendTable: group=%s member=%s found=%v", sg.Name, sgm.Name, found)
+			if found {
+				b.ServiceGroupName = sg.Name
+				b.ServiceGroupProtocol = A10ProtocolName(sg.Protocol)
+			}
+		}
+	}
+
+	// scan virtual server list attaching information to backend table
+	// this loop is UNABLE to find service groups detached from virtual servers
+	for _, vs := range vsList {
+		for _, vp := range vs.VirtualPorts {
+			sg, found := groupTab[vp.ServiceGroup]
+			if !found {
+				log.Printf("fetchBackendTable: vserver=%s group=%s not found", vs.Name, vp.ServiceGroup)
+				continue
+			}
+			for _, sgm := range sg.Members {
+				if b, found := backendTab[sgm.Name]; found {
+					b.VirtualServerName = vs.Name
+					b.VirtualServerAddress = vs.Address
+					b.VirtualServerPort = vp.Port
+					b.VirtualServerProtocol = A10ProtocolName(vp.Protocol)
+				}
+			}
+		}
+	}
+
+	return backendTab
 }
