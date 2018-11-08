@@ -11,7 +11,8 @@ import (
 	"github.com/udhos/a10-go-rest-client/a10go"
 )
 
-// /v1/at/node/<host>/rule/<rule>
+// /v1/at/node/<host>/rule/
+// /v1/at/node/<host>/server/
 // ^^^^^^^^^^^^
 // prefix
 func handlerNodeA10v2(debug, dry bool, w http.ResponseWriter, r *http.Request, path string) {
@@ -47,14 +48,24 @@ func handlerNodeA10v2(debug, dry bool, w http.ResponseWriter, r *http.Request, p
 	}
 	log.Printf(me+": method=%s url=%s from=%s suffix=[%s] auth realm=[%s] auth=[%s:%s]", r.Method, r.URL.Path, r.RemoteAddr, suffix, realm, username, hidePassword(password))
 
-	ruleField := fields[1]
-	if ruleField != "rule" {
-		reason := fmt.Sprintf("missing fule field: [%s]", ruleField)
-		sendBadRequest(me, reason, w, r)
-		return
-	}
+	log.Printf("handlerNodeA10v2: FIXME? Access-Control-Allow-Origin")
+	w.Header().Set("Access-Control-Allow-Origin", "*") // FIXME?
 
-	w.Header().Set("Access-Control-Allow-Origin", "*") // FIXME??
+	optionField := fields[1]
+	switch optionField {
+	case "rule":
+		nodeA10v2Rule(debug, dry, w, r, username, password, fields)
+	case "server":
+		nodeA10v2Server(debug, dry, w, r, username, password, fields)
+	default:
+		reason := fmt.Sprintf("missing option field: [%s]", optionField)
+		sendBadRequest(me, reason, w, r)
+	}
+}
+
+func nodeA10v2Rule(debug, dry bool, w http.ResponseWriter, r *http.Request, username, password string, fields []string) {
+
+	me := "nodeA10v2Rule"
 
 	switch r.Method {
 	case http.MethodGet:
@@ -62,8 +73,6 @@ func handlerNodeA10v2(debug, dry bool, w http.ResponseWriter, r *http.Request, p
 	case http.MethodPut:
 		nodeA10v2RulePut(debug, dry, w, r, username, password, fields)
 	default:
-		w.Header().Set("Allow", "POST") // required by 405 error
-		http.Error(w, r.Method+" method not supported", 405)
 		sendNotSupported(me, w, r)
 	}
 }
