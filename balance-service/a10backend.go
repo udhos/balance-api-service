@@ -14,11 +14,15 @@ type backend struct {
 	VirtualServerAddress  string
 	VirtualServerPort     string
 	VirtualServerProtocol string
-	ServiceGroupName      string
-	ServiceGroupProtocol  string
+	ServiceGroups         []backendServiceGroup
 	BackendName           string
 	BackendAddress        string
 	BackendPorts          []backendPort
+}
+
+type backendServiceGroup struct {
+	Name     string
+	Protocol string
 }
 
 type backendPort struct {
@@ -126,24 +130,34 @@ func fetchBackendTable(c *a10go.Client) map[string]*backend {
 		backendTab[b.BackendName] = &b
 	}
 
+	backendUniqueGroups := map[string]struct{}{} // prevent repeatedly adding group as backend parent
+
 	// scan service group table
 	// this loop IS able to find all service groups (including those ones detached from virtual servers)
 	groupTab := map[string]a10go.A10ServiceGroup{}
 	for _, sg := range sgList {
-		groupTab[sg.Name] = sg
+		groupTab[sg.Name] = sg // record group info by name for below
 		for _, sgm := range sg.Members {
 			b, found := backendTab[sgm.Name]
-			log.Printf("fetchBackendTable: group=%s member=%s found=%v", sg.Name, sgm.Name, found)
-			if found {
-				b.ServiceGroupName = sg.Name
-				b.ServiceGroupProtocol = A10ProtocolName(sg.Protocol)
+			log.Printf("fetchBackendTable: group=%s backend=%s found=%v", sg.Name, sgm.Name, found)
+			if !found {
+				continue
 			}
+			dedupKey := b.BackendName + " " + sg.Name
+			_, dup := backendUniqueGroups[dedupKey]
+			log.Printf("fetchBackendTable: key=[%s] group=%s backend=%s dup=%v", dedupKey, sg.Name, sgm.Name, dup)
+			if dup {
+				continue
+			}
+			backendUniqueGroups[dedupKey] = struct{}{} // mark as added
+			b.ServiceGroups = append(b.ServiceGroups, backendServiceGroup{Name: sg.Name, Protocol: sg.Protocol})
 		}
 	}
 
 	// scan virtual server list attaching information to backend table
 	// this loop is UNABLE to find service groups detached from virtual servers
 	for _, vs := range vsList {
+		log.Printf("fetchBackendTable: vserver=%s", vs.Name)
 		for _, vp := range vs.VirtualPorts {
 			sg, found := groupTab[vp.ServiceGroup]
 			if !found {
