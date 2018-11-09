@@ -14,6 +14,3 @@ build() {
 build ./examples/f5-api-client
 build ./balance-service
 
-echo 1. start service: balance-service
-echo 2. run DANGEROUS testing: go test ./test-destroy-danger
-
