@@ -36,3 +36,5 @@ github.com/udhos/a10-go-rest-client v0.0.0-20181107184112-61a5bb877d58 h1:eE8Vfm
 github.com/udhos/a10-go-rest-client v0.0.0-20181107184112-61a5bb877d58/go.mod h1:bgP1mtveiqIMdn41+OYqHtHWC/khYGNc/8Y3NgDLV3U=
 github.com/udhos/a10-go-rest-client v0.0.0-20181107185303-cc2819f40d9b h1:hjLdW6+vJAzm0655pZy6yzIqo+VmS7oiaf1tiLA9lTI=
 github.com/udhos/a10-go-rest-client v0.0.0-20181107185303-cc2819f40d9b/go.mod h1:bgP1mtveiqIMdn41+OYqHtHWC/khYGNc/8Y3NgDLV3U=
+github.com/udhos/a10-go-rest-client v0.0.0-20181109185020-83f271d9e45e h1:AZiWK540YhnH2wR/mIkj6jNhoOyNkLQNNh9oAGTms9U=
+github.com/udhos/a10-go-rest-client v0.0.0-20181109185020-83f271d9e45e/go.mod h1:bgP1mtveiqIMdn41+OYqHtHWC/khYGNc/8Y3NgDLV3U=

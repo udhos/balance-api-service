@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -63,13 +64,13 @@ func nodeA10v2BackendGet(w http.ResponseWriter, r *http.Request, username, passw
 	me := "nodeA10v2BackendGet"
 
 	host := fields[0]
-
 	c := a10go.New(host, a10go.Options{})
 
 	errLogin := c.Login(username, password)
 	if errLogin != nil {
 		log.Printf(me+": method=%s url=%s from=%s auth: %v", r.Method, r.URL.Path, r.RemoteAddr, errLogin)
 		http.Error(w, host+" bad gateway - auth", http.StatusBadGateway) // 502
+		return
 	}
 
 	backendTab := fetchBackendTable(c)
@@ -109,8 +110,55 @@ func sendBackendList(me string, w http.ResponseWriter, r *http.Request, tab map[
 
 func nodeA10v2BackendDelete(debug, dry bool, w http.ResponseWriter, r *http.Request, username, password string, fields []string) {
 	me := "nodeA10v2BackendDelete"
-	log.Printf(me + " FIXME WRITEME")
-	writeStr(me, w, "backend DELETE hello\n")
+
+	var be backend
+
+	dec := json.NewDecoder(r.Body)
+
+	errJson := dec.Decode(&be)
+	if errJson != nil {
+		reason := fmt.Sprintf("json error: %v", errJson)
+		sendBadRequest(me, reason, w, r)
+		return
+	}
+
+	if be.BackendName == "" {
+		sendBadRequest(me, "missing backend name", w, r)
+		return
+	}
+
+	log.Printf("%s: backend=[%s] serviceGroups=%d", me, be.BackendName, len(be.ServiceGroups))
+
+	host := fields[0]
+	c := a10go.New(host, a10go.Options{Debug: debug})
+
+	errLogin := c.Login(username, password)
+	if errLogin != nil {
+		log.Printf(me+": method=%s url=%s from=%s auth: %v", r.Method, r.URL.Path, r.RemoteAddr, errLogin)
+		http.Error(w, host+" bad gateway - auth", http.StatusBadGateway) // 502
+		return
+	}
+
+	defer func() {
+		if errClose := c.Logout(); errClose != nil {
+			log.Printf(me+": method=%s url=%s from=%s close error: %v", r.Method, r.URL.Path, r.RemoteAddr, errClose)
+			// log warning only
+		}
+	}()
+
+	if len(be.ServiceGroups) < 1 {
+		// service groups not provided - delete unlinked server
+		errDelete := c.ServerDelete(be.BackendName)
+		if errDelete != nil {
+			log.Printf(me+": method=%s url=%s from=%s delete server: %v", r.Method, r.URL.Path, r.RemoteAddr, errDelete)
+			http.Error(w, host+" bad gateway - delete server", http.StatusBadGateway) // 502
+			return
+		}
+		writeStr(me, w, "server deleted\n")
+	} else {
+		// service groups provided - unlink server from groups
+		writeStr(me, w, "server unlinked\n")
+	}
 }
 
 func nodeA10v2BackendPut(debug, dry bool, w http.ResponseWriter, r *http.Request, username, password string, fields []string) {
