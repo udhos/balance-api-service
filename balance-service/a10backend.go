@@ -148,6 +148,7 @@ func nodeA10v2BackendDelete(debug, dry bool, w http.ResponseWriter, r *http.Requ
 
 	if len(be.ServiceGroups) < 1 {
 		// service groups not provided - delete unlinked server
+
 		errDelete := c.ServerDelete(be.BackendName)
 		if errDelete != nil {
 			log.Printf(me+": method=%s url=%s from=%s delete server: %v", r.Method, r.URL.Path, r.RemoteAddr, errDelete)
@@ -157,8 +158,68 @@ func nodeA10v2BackendDelete(debug, dry bool, w http.ResponseWriter, r *http.Requ
 		writeStr(me, w, "server deleted\n")
 	} else {
 		// service groups provided - unlink server from groups
-		writeStr(me, w, "server unlinked\n")
+
+		backendUnlink(c, w, r, be, host)
 	}
+}
+
+func backendUnlink(c *a10go.Client, w http.ResponseWriter, r *http.Request, be backend, host string) {
+
+	me := "backendUnlink"
+
+	sgList := c.ServiceGroupList() // all available groups
+
+	sgUnlinkList := []a10go.A10ServiceGroup{} // groups linked to backend server
+
+	// find groups linked to backend server
+LOOP:
+	for _, bsg := range be.ServiceGroups {
+		for _, sg := range sgList {
+			if sg.Name == bsg.Name {
+				// found bsg
+				sgUnlinkList = append(sgUnlinkList, sg)
+				continue LOOP // next bsg
+			}
+		}
+		// bsg not found
+		log.Printf(me+": method=%s url=%s from=%s unlink server: group=%s not found", r.Method, r.URL.Path, r.RemoteAddr, bsg.Name)
+		http.Error(w, host+" bad gateway - unlink server: group not found", http.StatusBadGateway) // 502
+		return
+	}
+
+	log.Printf(me+": backend=[%s] linked groups=%v", be.BackendName, sgUnlinkList)
+
+	var errCount int
+
+	// scan groups unlinking the backend server
+
+	for _, sg := range sgUnlinkList {
+		var memberList []string
+		for _, m := range sg.Members {
+			if m.Name == be.BackendName {
+				continue
+			}
+			memberList = append(memberList, m.Name+","+m.Port)
+		}
+
+		// update group members without the backend server
+
+		// delete previous member list
+		errUpdate1 := c.ServiceGroupUpdate(sg.Name, sg.Protocol, nil)
+		if errUpdate1 != nil {
+			log.Printf(me+": method=%s url=%s from=%s unlink group=%s update-reset: %v", r.Method, r.URL.Path, r.RemoteAddr, sg.Name, errUpdate1)
+			errCount++
+		}
+
+		// rebuild member list
+		errUpdate2 := c.ServiceGroupUpdate(sg.Name, sg.Protocol, memberList)
+		if errUpdate2 != nil {
+			log.Printf(me+": method=%s url=%s from=%s unlink group=%s update-rebuild: %v", r.Method, r.URL.Path, r.RemoteAddr, sg.Name, errUpdate2)
+			errCount++
+		}
+	}
+
+	writeStr(me, w, fmt.Sprintf("server unlinked - errors:%d\n", errCount))
 }
 
 func nodeA10v2BackendPut(debug, dry bool, w http.ResponseWriter, r *http.Request, username, password string, fields []string) {
