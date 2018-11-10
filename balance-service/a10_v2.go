@@ -59,7 +59,7 @@ func handlerNodeA10v2(debug, dry bool, w http.ResponseWriter, r *http.Request, p
 	case "backend":
 		nodeA10v2Backend(debug, dry, w, r, username, password, fields)
 	default:
-		reason := fmt.Sprintf("missing option field: [%s]", optionField)
+		reason := fmt.Sprintf("unexpected option field: [%s]", optionField)
 		sendBadRequest(me, reason, w, r)
 	}
 }
