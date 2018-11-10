@@ -12,7 +12,8 @@ import (
 
 // backend is the main type for the /backend/ route
 // A10 full backend path is:
-// virtual server -> virtual port (within virtual server) -> service group -> backend
+// virtual server -> virtual port list -> service group -> list of {backend_name, backend_port} -> server (has own list of ports)
+
 type backend struct {
 	VirtualServers []backendVirtualServer
 	ServiceGroups  []backendServiceGroup
