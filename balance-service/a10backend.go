@@ -28,7 +28,13 @@ type backend struct {
 type backendVirtualServer struct {
 	Name         string
 	Address      string
-	VirtualPorts []backendPort
+	VirtualPorts []backendVirtualPort
+}
+
+type backendVirtualPort struct {
+	Port         string
+	Protocol     string
+	ServiceGroup string
 }
 
 type backendServiceGroup struct {
@@ -80,14 +86,7 @@ func nodeA10v2BackendGet(w http.ResponseWriter, r *http.Request, username, passw
 		return
 	}
 
-	var backendTab map[string]*backend
-
-	query := r.URL.Query()
-	if _, found := query["v2"]; found {
-		backendTab = fetchBackendTable2(c)
-	} else {
-		backendTab = fetchBackendTable(c)
-	}
+	backendTab := fetchBackendTable(c)
 
 	if errClose := c.Logout(); errClose != nil {
 		log.Printf(me+": method=%s url=%s from=%s close error: %v", r.Method, r.URL.Path, r.RemoteAddr, errClose)
@@ -384,7 +383,8 @@ func backendLink(c *a10go.Client, w http.ResponseWriter, r *http.Request, be bac
 	writeStr(me, w, fmt.Sprintf("server linked - errors:%d\n", errCount))
 }
 
-func fetchBackendTable(c *a10go.Client) map[string]*backend {
+// fetchBackendTableEraseme FIXME ERASEME
+func fetchBackendTableEraseme(c *a10go.Client) map[string]*backend {
 	backendTab := map[string]*backend{} // backendName => backend
 
 	// collect all information from A10
@@ -435,7 +435,7 @@ func fetchBackendTable(c *a10go.Client) map[string]*backend {
 	for _, vs := range vsList {
 		bvs := &backendVirtualServer{Name: vs.Name, Address: vs.Address}
 		for _, vp := range vs.VirtualPorts {
-			bvs.VirtualPorts = append(bvs.VirtualPorts, backendPort{Port: vp.Port, Protocol: A10ProtocolName(vp.Protocol)})
+			bvs.VirtualPorts = append(bvs.VirtualPorts, backendVirtualPort{Port: vp.Port, Protocol: A10ProtocolName(vp.Protocol)})
 		}
 		bvsTab[vs.Name] = bvs
 	}
