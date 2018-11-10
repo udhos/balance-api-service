@@ -80,7 +80,14 @@ func nodeA10v2BackendGet(w http.ResponseWriter, r *http.Request, username, passw
 		return
 	}
 
-	backendTab := fetchBackendTable(c)
+	var backendTab map[string]*backend
+
+	query := r.URL.Query()
+	if _, found := query["v2"]; found {
+		backendTab = fetchBackendTable2(c)
+	} else {
+		backendTab = fetchBackendTable(c)
+	}
 
 	if errClose := c.Logout(); errClose != nil {
 		log.Printf(me+": method=%s url=%s from=%s close error: %v", r.Method, r.URL.Path, r.RemoteAddr, errClose)
