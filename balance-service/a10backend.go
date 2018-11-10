@@ -376,7 +376,7 @@ func backendLink(c *a10go.Client, w http.ResponseWriter, r *http.Request, be bac
 }
 
 func fetchBackendTable(c *a10go.Client) map[string]*backend {
-	backendTab := map[string]*backend{}
+	backendTab := map[string]*backend{} // backendName => backend
 
 	// collect all information from A10
 	sList := c.ServerList()
@@ -399,13 +399,14 @@ func fetchBackendTable(c *a10go.Client) map[string]*backend {
 
 	// scan service group table
 	// this loop IS able to find all service groups (including those ones detached from virtual servers)
-	groupTab := map[string]a10go.A10ServiceGroup{}
+	groupTab := map[string]a10go.A10ServiceGroup{} // groupName => group
 	for _, sg := range sgList {
 		groupTab[sg.Name] = sg // record group info by name for below
+
 		for _, sgm := range sg.Members {
 			b, found := backendTab[sgm.Name]
 			if !found {
-				continue
+				continue // group backend not found - skip
 			}
 			dedupKey := b.BackendName + " " + sg.Name
 			_, dup := backendUniqueGroups[dedupKey]
@@ -413,7 +414,10 @@ func fetchBackendTable(c *a10go.Client) map[string]*backend {
 				continue
 			}
 			backendUniqueGroups[dedupKey] = struct{}{} // mark as added
-			b.ServiceGroups = append(b.ServiceGroups, backendServiceGroup{Name: sg.Name, Protocol: sg.Protocol})
+
+			bsg := backendServiceGroup{Name: sg.Name, Protocol: sg.Protocol}
+
+			b.ServiceGroups = append(b.ServiceGroups, bsg)
 		}
 	}
 
