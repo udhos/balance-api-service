@@ -33,6 +33,12 @@ type backendVirtualServer struct {
 type backendServiceGroup struct {
 	Name     string
 	Protocol string
+	Members  []backendSGMember // list of members
+}
+
+type backendSGMember struct {
+	Name string
+	Port string
 }
 
 type backendPort struct {
@@ -53,8 +59,8 @@ func nodeA10v2Backend(debug, dry bool, w http.ResponseWriter, r *http.Request, u
 		nodeA10v2BackendGet(w, r, username, password, fields)
 	case http.MethodDelete:
 		nodeA10v2BackendDelete(debug, dry, w, r, username, password, fields)
-	case http.MethodPut:
-		nodeA10v2BackendPut(debug, dry, w, r, username, password, fields)
+	case http.MethodPost:
+		nodeA10v2BackendPost(debug, dry, w, r, username, password, fields)
 	default:
 		sendNotSupported(me, w, r)
 	}
@@ -130,7 +136,7 @@ func nodeA10v2BackendDelete(debug, dry bool, w http.ResponseWriter, r *http.Requ
 	log.Printf("%s: backend=[%s] serviceGroups=%d", me, be.BackendName, len(be.ServiceGroups))
 
 	host := fields[0]
-	c := a10go.New(host, a10go.Options{Debug: debug})
+	c := a10go.New(host, a10go.Options{Debug: debug, Dry: dry})
 
 	errLogin := c.Login(username, password)
 	if errLogin != nil {
@@ -194,15 +200,8 @@ LOOP:
 	// scan groups unlinking the backend server
 
 	for _, sg := range sgUnlinkList {
-		var memberList []string
-		for _, m := range sg.Members {
-			if m.Name == be.BackendName {
-				continue
-			}
-			memberList = append(memberList, m.Name+","+m.Port)
-		}
 
-		// update group members without the backend server
+		memberList := rebuildMemberList(sg.Name, sg.Members, be)
 
 		// delete previous member list
 		errUpdate1 := c.ServiceGroupUpdate(sg.Name, sg.Protocol, nil)
@@ -222,10 +221,158 @@ LOOP:
 	writeStr(me, w, fmt.Sprintf("server unlinked - errors:%d\n", errCount))
 }
 
-func nodeA10v2BackendPut(debug, dry bool, w http.ResponseWriter, r *http.Request, username, password string, fields []string) {
-	me := "nodeA10v2BackendPut"
-	log.Printf(me + " FIXME WRITEME")
-	writeStr(me, w, "backend PUT hello\n")
+func nodeA10v2BackendPost(debug, dry bool, w http.ResponseWriter, r *http.Request, username, password string, fields []string) {
+	me := "nodeA10v2BackendPost"
+
+	var be backend
+
+	dec := json.NewDecoder(r.Body)
+
+	errJson := dec.Decode(&be)
+	if errJson != nil {
+		reason := fmt.Sprintf("json error: %v", errJson)
+		sendBadRequest(me, reason, w, r)
+		return
+	}
+
+	if be.BackendName == "" {
+		sendBadRequest(me, "missing backend name", w, r)
+		return
+	}
+
+	if be.BackendAddress == "" {
+		sendBadRequest(me, "missing backend address", w, r)
+		return
+	}
+
+	log.Printf("%s: backend=[%s] serviceGroups=%d", me, be.BackendName, len(be.ServiceGroups))
+
+	host := fields[0]
+	c := a10go.New(host, a10go.Options{Debug: debug, Dry: dry})
+
+	errLogin := c.Login(username, password)
+	if errLogin != nil {
+		log.Printf(me+": method=%s url=%s from=%s auth: %v", r.Method, r.URL.Path, r.RemoteAddr, errLogin)
+		http.Error(w, host+" bad gateway - auth", http.StatusBadGateway) // 502
+		return
+	}
+
+	defer func() {
+		if errClose := c.Logout(); errClose != nil {
+			log.Printf(me+": method=%s url=%s from=%s close error: %v", r.Method, r.URL.Path, r.RemoteAddr, errClose)
+			// log warning only
+		}
+	}()
+
+	// find groups linked to backend server
+
+	sgList := c.ServiceGroupList()        // all available groups
+	sgLinked := []a10go.A10ServiceGroup{} // groups to be linked to backend server
+LOOP:
+	for _, bsg := range be.ServiceGroups {
+		for _, sg := range sgList {
+			if sg.Name == bsg.Name {
+				// found bsg
+				sgLinked = append(sgLinked, sg)
+				continue LOOP // next bsg
+			}
+		}
+		// bsg not found
+		log.Printf(me+": method=%s url=%s from=%s link server: group=%s not found", r.Method, r.URL.Path, r.RemoteAddr, bsg.Name)
+		http.Error(w, host+" bad gateway - link server: group not found", http.StatusBadGateway) // 502
+		return
+	}
+	log.Printf(me+": backend=[%s] linked groups=%v", be.BackendName, sgLinked)
+
+	// create or update server?
+	sList := c.ServerList()
+	var serverFound bool // defaults to create server
+	for _, s := range sList {
+		if s.Name == be.BackendName {
+			serverFound = true // update server
+			break
+		}
+	}
+
+	var portList []string
+	for _, p := range be.BackendPorts {
+		portList = append(portList, p.Port+","+p.Protocol)
+	}
+
+	// create or update server
+
+	if serverFound {
+		// server exists - update
+		errUpdate := c.ServerUpdate(be.BackendName, be.BackendAddress, portList)
+		if errUpdate != nil {
+			log.Printf(me+": method=%s url=%s from=%s update server: %v", r.Method, r.URL.Path, r.RemoteAddr, errUpdate)
+			http.Error(w, host+" bad gateway - update server", http.StatusBadGateway) // 502
+			return
+		}
+	} else {
+		// server does not exist - create
+		errCreate := c.ServerCreate(be.BackendName, be.BackendAddress, portList)
+		if errCreate != nil {
+			log.Printf(me+": method=%s url=%s from=%s create server: %v", r.Method, r.URL.Path, r.RemoteAddr, errCreate)
+			http.Error(w, host+" bad gateway - create server", http.StatusBadGateway) // 502
+			return
+		}
+	}
+
+	if len(be.ServiceGroups) < 1 {
+		// service groups not provided - delete unlinked server
+		writeStr(me, w, "server created/updated\n")
+	} else {
+		// service groups provided - link server from groups
+		backendLink(c, w, r, be, host, sgLinked)
+	}
+}
+
+// rebuild service group member list excluding
+func rebuildMemberList(sgName string, oldMembers []a10go.A10SGMember, be backend) []string {
+
+	me := "rebuildMemberList"
+
+	var memberList []string
+
+	// build service group member list
+	for _, m := range oldMembers {
+		if m.Name == be.BackendName {
+			continue // exclude previous backend server ports from list
+		}
+		memberList = append(memberList, m.Name+","+m.Port) // keep other existing members
+	}
+
+	// append new ports for current backend server
+	for _, bsg := range be.ServiceGroups {
+		for _, bsgm := range bsg.Members {
+			memberList = append(memberList, bsgm.Name+","+bsgm.Port)
+		}
+	}
+
+	log.Printf(me+": linking group=%s members=%v", sgName, memberList)
+
+	return memberList
+}
+
+func backendLink(c *a10go.Client, w http.ResponseWriter, r *http.Request, be backend, host string, sgLinked []a10go.A10ServiceGroup) {
+
+	me := "backendLink"
+
+	var errCount int
+
+	for _, sg := range sgLinked {
+
+		memberList := rebuildMemberList(sg.Name, sg.Members, be)
+
+		errUpdate := c.ServiceGroupUpdate(sg.Name, sg.Protocol, memberList)
+		if errUpdate != nil {
+			log.Printf(me+": method=%s url=%s from=%s link group=%s: %v", r.Method, r.URL.Path, r.RemoteAddr, sg.Name, errUpdate)
+			errCount++
+		}
+	}
+
+	writeStr(me, w, fmt.Sprintf("server linked - errors:%d\n", errCount))
 }
 
 func fetchBackendTable(c *a10go.Client) map[string]*backend {

@@ -15,7 +15,7 @@ Backend API
     #
     # delete backend:
     curl -u admin:a10 -X DELETE -d '{"BackendName": "eraseme1"}' http://192.168.56.20:8080/v1/at2/node/10.255.255.6/backend
-    # unlink backend from service group:
+    # unlink all backend ports from service group:
     curl -u admin:a10 -X DELETE -d '{"BackendName": "eraseme1", "ServiceGroups": [{"Name": "group1"}]}' http://192.168.56.20:8080/v1/at2/node/10.255.255.6/backend
 
 Caution: rule API below is broken

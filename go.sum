@@ -42,3 +42,11 @@ github.com/udhos/a10-go-rest-client v0.0.0-20181109195745-c9cde9d1c76f h1:C5OUIk
 github.com/udhos/a10-go-rest-client v0.0.0-20181109195745-c9cde9d1c76f/go.mod h1:bgP1mtveiqIMdn41+OYqHtHWC/khYGNc/8Y3NgDLV3U=
 github.com/udhos/a10-go-rest-client v0.0.0-20181109200611-bf54db13478a h1:1+6kRgapCk5+pg7WdmwAbAooiT5/XpJGJXcYvK30JIo=
 github.com/udhos/a10-go-rest-client v0.0.0-20181109200611-bf54db13478a/go.mod h1:bgP1mtveiqIMdn41+OYqHtHWC/khYGNc/8Y3NgDLV3U=
+github.com/udhos/a10-go-rest-client v0.0.0-20181109222448-0775f0a46c35 h1:9ShsQhSgACK2YMfcsK5ajaSHCkZa/oUSvSShQ1TUhbA=
+github.com/udhos/a10-go-rest-client v0.0.0-20181109222448-0775f0a46c35/go.mod h1:bgP1mtveiqIMdn41+OYqHtHWC/khYGNc/8Y3NgDLV3U=
+github.com/udhos/a10-go-rest-client v0.0.0-20181109230301-71354ca58bfd h1:y8A/B6pFqokL9AtwHbgTrrDsl0kTZVgfdQsZXpptQEw=
+github.com/udhos/a10-go-rest-client v0.0.0-20181109230301-71354ca58bfd/go.mod h1:bgP1mtveiqIMdn41+OYqHtHWC/khYGNc/8Y3NgDLV3U=
+github.com/udhos/a10-go-rest-client v0.0.0-20181109235827-fc0eecddf510 h1:YiX2zfIongNc/fRmXJ8wzZJRS/CtPg0XQutTkUzDYJw=
+github.com/udhos/a10-go-rest-client v0.0.0-20181109235827-fc0eecddf510/go.mod h1:bgP1mtveiqIMdn41+OYqHtHWC/khYGNc/8Y3NgDLV3U=
+github.com/udhos/a10-go-rest-client v0.0.0-20181110001034-57d93a208aa0 h1:oVS7PtEyEZsw/+ER/LJxrySgA1FmK8oTcsva4zbhctw=
+github.com/udhos/a10-go-rest-client v0.0.0-20181110001034-57d93a208aa0/go.mod h1:bgP1mtveiqIMdn41+OYqHtHWC/khYGNc/8Y3NgDLV3U=
