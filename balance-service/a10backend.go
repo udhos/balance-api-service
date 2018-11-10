@@ -296,8 +296,9 @@ LOOP:
 
 	var portList []string
 	for _, p := range be.BackendPorts {
-		portList = append(portList, p.Port+","+p.Protocol)
+		portList = append(portList, p.Port+","+A10ProtocolNumber(p.Protocol))
 	}
+	log.Printf(me+": portList=%v", portList)
 
 	// create or update server
 

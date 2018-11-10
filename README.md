@@ -23,7 +23,7 @@ Backend API
     curl -u admin:a10 -X POST -d '{"BackendName": "eraseme1", "BackendAddress": "3.3.3.3"}' http://192.168.56.20:8080/v1/at2/node/10.255.255.6/backend
 
     # create linked server
-    curl -u admin:a10 -X POST -d '{"BackendName": "eraseme1", "BackendAddress": "3.3.3.3", "ServiceGroups": [{"Name": "group1", "Members":[{"Name": "eraseme1", "Port":"3333"}]}]}' http://192.168.56.20:8080/v1/at2/node/10.255.255.6/backend
+    curl -u admin:a10 -X POST -d '{"BackendName": "eraseme1", "BackendAddress": "3.3.3.3", "BackendPorts": [{"Port": "4444", "Protocol": "tcp"}], "ServiceGroups": [{"Name": "group1", "Members":[{"Name": "eraseme1", "Port":"3333"},{"Name": "eraseme1", "Port":"5555"}]}]}' http://192.168.56.20:8080/v1/at2/node/10.255.255.6/backend
 
 Caution: rule API below is broken
 
