@@ -4,6 +4,7 @@ import (
 	"log"
 )
 
+/*
 type virtual struct {
 	Name    string
 	Address string // listen addr
@@ -27,6 +28,7 @@ type serverPort struct {
 	Port     string // backend server port
 	Protocol string // backend server proto
 }
+*/
 
 func A10ProtocolName(number string) string {
 	protoName := "unknown"
@@ -56,6 +58,7 @@ func A10ProtocolNumber(name string) string {
 	return number
 }
 
+/*
 // listNames extracts all names from virtual list
 func listNames(vsList []virtual) ([]string, []string, []string) {
 
@@ -119,3 +122,4 @@ func findVirtual(vsList []virtual, name string) virtual {
 
 	return virtual{}
 }
+*/

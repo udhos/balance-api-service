@@ -1,14 +1,13 @@
 package main
 
 import (
-	"encoding/json"
+	//"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"strings"
-
-	"github.com/sanity-io/litter"
-	"github.com/udhos/a10-go-rest-client/a10go"
+	//"github.com/sanity-io/litter"
+	//"github.com/udhos/a10-go-rest-client/a10go"
 )
 
 // /v1/at/node/<host>/rule/
@@ -53,8 +52,10 @@ func handlerNodeA10v2(debug, dry bool, w http.ResponseWriter, r *http.Request, p
 
 	optionField := fields[1]
 	switch optionField {
-	case "rule":
-		nodeA10v2Rule(debug, dry, w, r, username, password, fields)
+	/*
+		case "rule":
+			nodeA10v2Rule(debug, dry, w, r, username, password, fields)
+	*/
 	case "backend":
 		nodeA10v2Backend(debug, dry, w, r, username, password, fields)
 	default:
@@ -63,6 +64,7 @@ func handlerNodeA10v2(debug, dry bool, w http.ResponseWriter, r *http.Request, p
 	}
 }
 
+/*
 func nodeA10v2Rule(debug, dry bool, w http.ResponseWriter, r *http.Request, username, password string, fields []string) {
 
 	me := "nodeA10v2Rule"
@@ -224,3 +226,4 @@ func fetchVirtualList(c *a10go.Client) []virtual {
 
 	return vList
 }
+*/

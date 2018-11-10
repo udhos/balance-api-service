@@ -1,12 +1,13 @@
 package main
 
 import (
-	"fmt"
-	"log"
+//"fmt"
+//"log"
 
-	"github.com/udhos/a10-go-rest-client/a10go"
+//"github.com/udhos/a10-go-rest-client/a10go"
 )
 
+/*
 func put(c *a10go.Client, oldList, newList []virtual) {
 
 	me := "put"
@@ -180,3 +181,5 @@ func vServersCreateUpdate(label string, call func(string, string, []string) erro
 		}
 	}
 }
+
+*/
