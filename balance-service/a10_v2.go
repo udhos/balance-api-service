@@ -10,6 +10,25 @@ import (
 	//"github.com/udhos/a10-go-rest-client/a10go"
 )
 
+func clientOptions(r *http.Request) (acceptYAML, bodyYAML bool) {
+	for k, v := range r.Header {
+		for _, vv := range v {
+			log.Printf("clientOptions: header: [%s]=[%s]", k, vv)
+			if k == "Accept" && vv == "text/x-yaml" {
+				acceptYAML = true
+				continue
+			}
+			if k == "Content-Type" && vv == "text/x-yaml" {
+				bodyYAML = true
+			}
+		}
+	}
+
+	log.Printf("clientOptions: acceptYAML=%v bodyYAML=%v", acceptYAML, bodyYAML)
+
+	return
+}
+
 // /v1/at/node/<host>/rule/
 // /v1/at/node/<host>/backend/
 // ^^^^^^^^^^^^

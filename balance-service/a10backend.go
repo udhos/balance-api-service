@@ -8,6 +8,7 @@ import (
 
 	"github.com/sanity-io/litter"
 	"github.com/udhos/a10-go-rest-client/a10go"
+	"gopkg.in/yaml.v2"
 )
 
 // backend is the main type for the /backend/ route
@@ -93,10 +94,12 @@ func nodeA10v2BackendGet(w http.ResponseWriter, r *http.Request, username, passw
 		// log warning only
 	}
 
-	sendBackendList(me, w, r, backendTab)
+	acceptYAML, _ := clientOptions(r)
+
+	sendBackendList(me, w, r, backendTab, acceptYAML)
 }
 
-func sendBackendList(me string, w http.ResponseWriter, r *http.Request, tab map[string]*backend) {
+func sendBackendList(me string, w http.ResponseWriter, r *http.Request, tab map[string]*backend, acceptYAML bool) {
 
 	list := []*backend{}
 
@@ -104,6 +107,7 @@ func sendBackendList(me string, w http.ResponseWriter, r *http.Request, tab map[
 		list = append(list, b)
 	}
 
+	// force litter
 	query := r.URL.Query()
 	if _, found := query["debug"]; found {
 		writeStr(me, w, litter.Sdump(list))
@@ -111,6 +115,20 @@ func sendBackendList(me string, w http.ResponseWriter, r *http.Request, tab map[
 		return
 	}
 
+	// force YAML if supported
+	if acceptYAML {
+		buf, errMarshal := yaml.Marshal(list)
+		if errMarshal != nil {
+			log.Printf(me+": method=%s url=%s from=%s yaml error: %v", r.Method, r.URL.Path, r.RemoteAddr, errMarshal)
+			sendInternalError(me, w, r) // http 500
+			return
+		}
+		writeBuf(me, w, buf)
+		writeLine(me, w)
+		return
+	}
+
+	// default to JSON
 	buf, errMarshal := json.MarshalIndent(list, "", " ")
 	if errMarshal != nil {
 		log.Printf(me+": method=%s url=%s from=%s json error: %v", r.Method, r.URL.Path, r.RemoteAddr, errMarshal)
@@ -121,17 +139,44 @@ func sendBackendList(me string, w http.ResponseWriter, r *http.Request, tab map[
 	writeLine(me, w)
 }
 
+func decodeRequestBody(w http.ResponseWriter, r *http.Request, be *backend) error {
+
+	me := "decodeRequestBody"
+
+	_, sendYAML := clientOptions(r)
+
+	// force YAML if supported
+	if sendYAML {
+		log.Printf(me + ": decoding YAML request body")
+		dec := yaml.NewDecoder(r.Body)
+		errYaml := dec.Decode(&be)
+		if errYaml != nil {
+			reason := fmt.Sprintf("yaml error: %v", errYaml)
+			sendBadRequest(me, reason, w, r)
+			return fmt.Errorf(reason)
+		}
+		return nil
+	}
+
+	// defaults to JSON
+	log.Printf(me + ": decoding JSON request body")
+	dec := json.NewDecoder(r.Body)
+	errJson := dec.Decode(&be)
+	if errJson != nil {
+		reason := fmt.Sprintf("json error: %v", errJson)
+		sendBadRequest(me, reason, w, r)
+		return fmt.Errorf(reason)
+	}
+
+	return nil
+}
+
 func nodeA10v2BackendDelete(debug, dry bool, w http.ResponseWriter, r *http.Request, username, password string, fields []string) {
 	me := "nodeA10v2BackendDelete"
 
 	var be backend
 
-	dec := json.NewDecoder(r.Body)
-
-	errJson := dec.Decode(&be)
-	if errJson != nil {
-		reason := fmt.Sprintf("json error: %v", errJson)
-		sendBadRequest(me, reason, w, r)
+	if errDecode := decodeRequestBody(w, r, &be); errDecode != nil {
 		return
 	}
 
@@ -233,12 +278,7 @@ func nodeA10v2BackendPost(debug, dry bool, w http.ResponseWriter, r *http.Reques
 
 	var be backend
 
-	dec := json.NewDecoder(r.Body)
-
-	errJson := dec.Decode(&be)
-	if errJson != nil {
-		reason := fmt.Sprintf("json error: %v", errJson)
-		sendBadRequest(me, reason, w, r)
+	if errDecode := decodeRequestBody(w, r, &be); errDecode != nil {
 		return
 	}
 

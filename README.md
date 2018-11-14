@@ -13,6 +13,12 @@ Backend API
 
     # backend API
 
+    # send YAML request body (default is JSON)
+    curl -H "Content-Type: text/x-yaml"
+
+    # receive YAML response body (default is JSON)
+    curl -H "Accept: text/x-yaml"
+
     # delete backend:
     curl -u admin:a10 -X DELETE -d '{"BackendName": "eraseme1"}' http://192.168.56.20:8080/v1/at2/node/10.255.255.6/backend
 

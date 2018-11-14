@@ -4,4 +4,5 @@ require (
 	github.com/e-XpertSolutions/f5-rest-client v0.0.1-0.20180601080712-d7a337bfdf14
 	github.com/sanity-io/litter v1.1.0
 	github.com/udhos/a10-go-rest-client v0.0.0-20181110044812-6f52a2fc8e66
+	gopkg.in/yaml.v2 v2.2.1
 )
