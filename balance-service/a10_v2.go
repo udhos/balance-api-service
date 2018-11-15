@@ -10,15 +10,19 @@ import (
 	//"github.com/udhos/a10-go-rest-client/a10go"
 )
 
+func isYaml(s string) bool {
+	return strings.HasSuffix(s, "yaml") || strings.HasSuffix(s, "*")
+}
+
 func clientOptions(r *http.Request) (acceptYAML, bodyYAML bool) {
 	for k, v := range r.Header {
 		for _, vv := range v {
 			log.Printf("clientOptions: header: [%s]=[%s]", k, vv)
-			if k == "Accept" && vv == "text/x-yaml" {
+			if k == "Accept" && isYaml(vv) {
 				acceptYAML = true
 				continue
 			}
-			if k == "Content-Type" && vv == "text/x-yaml" {
+			if k == "Content-Type" && isYaml(vv) {
 				bodyYAML = true
 			}
 		}
