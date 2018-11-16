@@ -1,13 +1,10 @@
 package main
 
 import (
-	//"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"strings"
-	//"github.com/sanity-io/litter"
-	//"github.com/udhos/a10-go-rest-client/a10go"
 )
 
 func isYaml(s string) bool {
@@ -16,11 +13,13 @@ func isYaml(s string) bool {
 
 // Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8
 
-func clientOptions(r *http.Request) (acceptYAML, bodyYAML bool) {
+func clientOptions(debug bool, r *http.Request) (acceptYAML, bodyYAML bool) {
 	for k, v := range r.Header {
 	NEXT_HEADER:
 		for _, vv := range v {
-			log.Printf("clientOptions: header: [%s]=[%s]", k, vv)
+			if debug {
+				log.Printf("clientOptions: header: [%s]=[%s]", k, vv)
+			}
 			if k == "Accept" {
 				// split on "," -- handle all parts
 				typeList := strings.Split(vv, ",")
@@ -28,7 +27,9 @@ func clientOptions(r *http.Request) (acceptYAML, bodyYAML bool) {
 					// split on ";" -- handle only first part
 					typePrefix := strings.Split(t, ";")
 					if len(typePrefix) > 0 && isYaml(typePrefix[0]) {
-						log.Printf("clientOptions: yaml: Accept: %s", t)
+						if debug {
+							log.Printf("clientOptions: yaml: Accept: %s", t)
+						}
 						acceptYAML = true
 						continue NEXT_HEADER
 					}
@@ -40,7 +41,9 @@ func clientOptions(r *http.Request) (acceptYAML, bodyYAML bool) {
 		}
 	}
 
-	log.Printf("clientOptions: acceptYAML=%v bodyYAML=%v", acceptYAML, bodyYAML)
+	if debug {
+		log.Printf("clientOptions: acceptYAML=%v bodyYAML=%v", acceptYAML, bodyYAML)
+	}
 
 	return
 }

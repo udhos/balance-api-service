@@ -66,7 +66,7 @@ func nodeA10v2Backend(debug, dry bool, w http.ResponseWriter, r *http.Request, u
 
 	switch r.Method {
 	case http.MethodGet:
-		nodeA10v2BackendGet(w, r, username, password, fields)
+		nodeA10v2BackendGet(debug, w, r, username, password, fields)
 	case http.MethodDelete:
 		nodeA10v2BackendDelete(debug, dry, w, r, username, password, fields)
 	case http.MethodPost:
@@ -76,7 +76,7 @@ func nodeA10v2Backend(debug, dry bool, w http.ResponseWriter, r *http.Request, u
 	}
 }
 
-func nodeA10v2BackendGet(w http.ResponseWriter, r *http.Request, username, password string, fields []string) {
+func nodeA10v2BackendGet(debug bool, w http.ResponseWriter, r *http.Request, username, password string, fields []string) {
 	me := "nodeA10v2BackendGet"
 
 	host := fields[0]
@@ -96,7 +96,7 @@ func nodeA10v2BackendGet(w http.ResponseWriter, r *http.Request, username, passw
 		// log warning only
 	}
 
-	acceptYAML, _ := clientOptions(r)
+	acceptYAML, _ := clientOptions(debug, r)
 
 	sendBackendList(me, w, r, backendTab, acceptYAML)
 }
@@ -141,20 +141,12 @@ func sendBackendList(me string, w http.ResponseWriter, r *http.Request, tab map[
 	writeLine(me, w)
 }
 
-func decodeBackend(body io.Reader, bodyYAML bool, be *backend) error {
+func decodeBackend(debug bool, body io.Reader, bodyYAML bool, be *backend) error {
 	me := "decodeBackend"
 
 	// force YAML if supported
 	if bodyYAML {
 		log.Printf(me + ": decoding YAML request body")
-
-		/*
-			dec := yaml.NewDecoder(body)
-			errYaml := dec.Decode(be)
-			if errYaml != nil {
-				return fmt.Errorf("yaml error: %v", errYaml)
-			}
-		*/
 
 		buf, errRead := ioutil.ReadAll(body)
 		if errRead != nil {
@@ -181,13 +173,13 @@ func decodeBackend(body io.Reader, bodyYAML bool, be *backend) error {
 	return nil
 }
 
-func decodeRequestBody(w http.ResponseWriter, r *http.Request, be *backend) error {
+func decodeRequestBody(debug bool, w http.ResponseWriter, r *http.Request, be *backend) error {
 
 	me := "decodeRequestBody"
 
-	_, bodyYAML := clientOptions(r)
+	_, bodyYAML := clientOptions(debug, r)
 
-	errDecode := decodeBackend(r.Body, bodyYAML, be)
+	errDecode := decodeBackend(debug, r.Body, bodyYAML, be)
 	if errDecode != nil {
 		sendBadRequest(me, errDecode.Error(), w, r)
 		return errDecode
@@ -201,7 +193,7 @@ func nodeA10v2BackendDelete(debug, dry bool, w http.ResponseWriter, r *http.Requ
 
 	var be backend
 
-	if errDecode := decodeRequestBody(w, r, &be); errDecode != nil {
+	if errDecode := decodeRequestBody(debug, w, r, &be); errDecode != nil {
 		return
 	}
 
@@ -303,7 +295,7 @@ func nodeA10v2BackendPost(debug, dry bool, w http.ResponseWriter, r *http.Reques
 
 	var be backend
 
-	if errDecode := decodeRequestBody(w, r, &be); errDecode != nil {
+	if errDecode := decodeRequestBody(debug, w, r, &be); errDecode != nil {
 		return
 	}
 
@@ -316,8 +308,6 @@ func nodeA10v2BackendPost(debug, dry bool, w http.ResponseWriter, r *http.Reques
 		sendBadRequest(me, "missing backend address", w, r)
 		return
 	}
-
-	log.Printf("%s: backend=[%s] serviceGroups=%d", me, be.BackendName, len(be.ServiceGroups))
 
 	host := fields[0]
 	c := a10go.New(host, a10go.Options{Debug: debug, Dry: dry})
@@ -354,7 +344,6 @@ LOOP:
 		http.Error(w, host+" bad gateway - link server: group not found", http.StatusBadGateway) // 502
 		return
 	}
-	log.Printf(me+": backend=[%s] linked groups=%v", be.BackendName, sgLinked)
 
 	// create or update server?
 	sList := c.ServerList()
@@ -370,7 +359,6 @@ LOOP:
 	for _, p := range be.BackendPorts {
 		portList = append(portList, p.Port+","+A10ProtocolNumber(p.Protocol))
 	}
-	log.Printf(me+": portList=%v", portList)
 
 	// create or update server
 
