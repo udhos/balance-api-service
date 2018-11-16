@@ -14,13 +14,25 @@ func isYaml(s string) bool {
 	return strings.HasSuffix(s, "yaml") || strings.HasSuffix(s, "*")
 }
 
+// Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8
+
 func clientOptions(r *http.Request) (acceptYAML, bodyYAML bool) {
 	for k, v := range r.Header {
+	NEXT_HEADER:
 		for _, vv := range v {
 			log.Printf("clientOptions: header: [%s]=[%s]", k, vv)
-			if k == "Accept" && isYaml(vv) {
-				acceptYAML = true
-				continue
+			if k == "Accept" {
+				// split on "," -- handle all parts
+				typeList := strings.Split(vv, ",")
+				for _, t := range typeList {
+					// split on ";" -- handle only first part
+					typePrefix := strings.Split(t, ";")
+					if len(typePrefix) > 0 && isYaml(typePrefix[0]) {
+						log.Printf("clientOptions: yaml: Accept: %s", t)
+						acceptYAML = true
+						continue NEXT_HEADER
+					}
+				}
 			}
 			if k == "Content-Type" && isYaml(vv) {
 				bodyYAML = true
