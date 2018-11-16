@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 
@@ -139,33 +141,56 @@ func sendBackendList(me string, w http.ResponseWriter, r *http.Request, tab map[
 	writeLine(me, w)
 }
 
-func decodeRequestBody(w http.ResponseWriter, r *http.Request, be *backend) error {
-
-	me := "decodeRequestBody"
-
-	_, sendYAML := clientOptions(r)
+func decodeBackend(body io.Reader, bodyYAML bool, be *backend) error {
+	me := "decodeBackend"
 
 	// force YAML if supported
-	if sendYAML {
+	if bodyYAML {
 		log.Printf(me + ": decoding YAML request body")
-		dec := yaml.NewDecoder(r.Body)
-		errYaml := dec.Decode(&be)
-		if errYaml != nil {
-			reason := fmt.Sprintf("yaml error: %v", errYaml)
-			sendBadRequest(me, reason, w, r)
-			return fmt.Errorf(reason)
+
+		/*
+			dec := yaml.NewDecoder(body)
+			errYaml := dec.Decode(be)
+			if errYaml != nil {
+				return fmt.Errorf("yaml error: %v", errYaml)
+			}
+		*/
+
+		buf, errRead := ioutil.ReadAll(body)
+		if errRead != nil {
+			return fmt.Errorf("read error: %v", errRead)
 		}
+
+		errYaml := yaml.Unmarshal(buf, be)
+		if errYaml != nil {
+			log.Printf(me+": decoding YAML request body - error: %v buf=[%s]", errYaml, string(buf))
+			return fmt.Errorf("yaml error: %v", errYaml)
+		}
+
 		return nil
 	}
 
 	// defaults to JSON
 	log.Printf(me + ": decoding JSON request body")
-	dec := json.NewDecoder(r.Body)
-	errJson := dec.Decode(&be)
+	dec := json.NewDecoder(body)
+	errJson := dec.Decode(be)
 	if errJson != nil {
-		reason := fmt.Sprintf("json error: %v", errJson)
-		sendBadRequest(me, reason, w, r)
-		return fmt.Errorf(reason)
+		return fmt.Errorf("json error: %v", errJson)
+	}
+
+	return nil
+}
+
+func decodeRequestBody(w http.ResponseWriter, r *http.Request, be *backend) error {
+
+	me := "decodeRequestBody"
+
+	_, bodyYAML := clientOptions(r)
+
+	errDecode := decodeBackend(r.Body, bodyYAML, be)
+	if errDecode != nil {
+		sendBadRequest(me, errDecode.Error(), w, r)
+		return errDecode
 	}
 
 	return nil
