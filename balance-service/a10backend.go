@@ -25,9 +25,6 @@ type backend struct {
 	BackendPorts   []backendPort
 }
 
-// FIXME:
-// bvs for for backend1 should be distinct from bvs for backend2
-// because backend1 should report in its parent VS only VirtualPorts from its path
 type backendVirtualServer struct {
 	Name         string
 	Address      string
