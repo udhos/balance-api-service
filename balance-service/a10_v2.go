@@ -48,6 +48,46 @@ func clientOptions(debug bool, r *http.Request) (acceptYAML, bodyYAML bool) {
 	return
 }
 
+// Forwarded: by=<identifier>; for=<identifier>; host=<host>; proto=<http|https>
+func forwarded(label string, r *http.Request) (fBy, fFor, fHost, fProto string) {
+
+	me := "forwarded"
+
+LOOP:
+	for k, v := range r.Header {
+		for _, vv := range v {
+			switch k {
+			case "X-Forwarded-For":
+				fFor = vv
+			case "X-Forwarded-Host":
+				fHost = vv
+			case "X-Forwarded-Proto":
+				fProto = vv
+			case "Forwarded":
+				partList := strings.Split(vv, ";")
+				for _, part := range partList {
+					p := strings.TrimSpace(part)
+					switch {
+					case strings.HasPrefix(p, "by="):
+						fBy = strings.TrimPrefix(p, "by=")
+					case strings.HasPrefix(p, "for="):
+						fFor = strings.TrimPrefix(p, "for=")
+					case strings.HasPrefix(p, "host="):
+						fHost = strings.TrimPrefix(p, "host=")
+					case strings.HasPrefix(p, "proto="):
+						fProto = strings.TrimPrefix(p, "proto=")
+					}
+				}
+				break LOOP
+			}
+		}
+	}
+
+	log.Printf("%s: %s: by=%s for=%s host=%s proto=%s", label, me, fBy, fFor, fHost, fProto)
+
+	return
+}
+
 // /v1/at/node/<host>/rule/
 // /v1/at/node/<host>/backend/
 // ^^^^^^^^^^^^
@@ -63,8 +103,8 @@ func handlerNodeA10v2(debug, dry bool, w http.ResponseWriter, r *http.Request, p
 
 	suffix := strings.TrimPrefix(r.URL.Path, path)
 
-	msg := fmt.Sprintf(me+": method=%s url=%s from=%s suffix=[%s]", r.Method, r.URL.Path, r.RemoteAddr, suffix)
-	log.Print(msg)
+	log.Printf(me+": method=%s url=%s from=%s suffix=[%s]", r.Method, r.URL.Path, r.RemoteAddr, suffix)
+	forwarded(me, r)
 
 	fields := strings.FieldsFunc(suffix, func(r rune) bool { return r == '/' })
 
