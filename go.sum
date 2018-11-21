@@ -54,6 +54,8 @@ github.com/udhos/a10-go-rest-client v0.0.0-20181110044812-6f52a2fc8e66 h1:tJDtJI
 github.com/udhos/a10-go-rest-client v0.0.0-20181110044812-6f52a2fc8e66/go.mod h1:bgP1mtveiqIMdn41+OYqHtHWC/khYGNc/8Y3NgDLV3U=
 github.com/udhos/a10-go-rest-client v0.0.0-20181116013218-fba1496a17e1 h1:som/50kNyUSXuCkcGyvvxwjAbu6A8qTQt7VQvkXcSQw=
 github.com/udhos/a10-go-rest-client v0.0.0-20181116013218-fba1496a17e1/go.mod h1:bgP1mtveiqIMdn41+OYqHtHWC/khYGNc/8Y3NgDLV3U=
+github.com/udhos/a10-go-rest-client v0.0.0-20181118144947-da32570601c8 h1:YjGXnQ8EYTa3CDJoFaxlm6bQmYJ91sODenZRE/fcpag=
+github.com/udhos/a10-go-rest-client v0.0.0-20181118144947-da32570601c8/go.mod h1:bgP1mtveiqIMdn41+OYqHtHWC/khYGNc/8Y3NgDLV3U=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/yaml.v2 v2.2.1 h1:mUhvW9EsL+naU5Q3cakzfE91YhliOondGd6ZrsDBHQE=
