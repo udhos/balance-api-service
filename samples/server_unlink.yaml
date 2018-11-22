@@ -1,0 +1,10 @@
+backendname: s1
+backendaddress: 2.2.2.2
+servicegroups:
+- name: group1
+  protocol: tcp
+  members:
+  - name: s1
+    port: "5555"
+  - name: s1
+    port: "3333"
