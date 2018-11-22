@@ -378,8 +378,12 @@ LOOP:
 	}
 
 	if len(be.ServiceGroups) < 1 {
-		// service groups not provided - delete unlinked server
-		writeStr(me, w, "server created/updated\n")
+		// service groups not provided - create/update server
+		if serverFound {
+			writeStr(me, w, "server updated\n")
+		} else {
+			writeStr(me, w, "server created\n")
+		}
 	} else {
 		// service groups provided - link server from groups
 		backendLink(c, w, r, be, host, sgLinked)
@@ -433,6 +437,7 @@ func backendLink(c *a10go.Client, w http.ResponseWriter, r *http.Request, be bac
 	writeStr(me, w, fmt.Sprintf("server linked - errors:%d\n", errCount))
 }
 
+/*
 // fetchBackendTableEraseme FIXME ERASEME
 func fetchBackendTableEraseme(c *a10go.Client) map[string]*backend {
 	backendTab := map[string]*backend{} // backendName => backend
@@ -521,3 +526,4 @@ func fetchBackendTableEraseme(c *a10go.Client) map[string]*backend {
 
 	return backendTab
 }
+*/
