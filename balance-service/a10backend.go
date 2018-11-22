@@ -199,8 +199,6 @@ func nodeA10v2BackendDelete(debug, dry bool, w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	log.Printf("%s: backend=[%s] serviceGroups=%d", me, be.BackendName, len(be.ServiceGroups))
-
 	host := fields[0]
 	c := a10go.New(host, a10go.Options{Debug: debug, Dry: dry})
 
