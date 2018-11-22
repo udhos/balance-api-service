@@ -265,7 +265,7 @@ LOOP:
 
 	for _, sg := range sgUnlinkList {
 
-		memberList := rebuildMemberList(sg.Name, sg.Members, be)
+		memberList := rebuildMemberList(sg.Name, sg.Members, be.BackendName, nil)
 
 		// delete previous member list
 		errUpdate1 := c.ServiceGroupUpdate(sg.Name, sg.Protocol, nil)
@@ -299,6 +299,7 @@ func nodeA10v2BackendPost(debug, dry bool, w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	// A10 API for slb.server.update requires server address
 	if be.BackendAddress == "" {
 		sendBadRequest(me, "missing backend address", w, r)
 		return
@@ -388,8 +389,8 @@ LOOP:
 	}
 }
 
-// rebuild service group member list excluding
-func rebuildMemberList(sgName string, oldMembers []a10go.A10SGMember, be backend) []string {
+// rebuild service group member list excluding groups in oldMembers, adding groups in newGroups
+func rebuildMemberList(sgName string, oldMembers []a10go.A10SGMember, backendName string, newGroups []backendServiceGroup) []string {
 
 	me := "rebuildMemberList"
 
@@ -397,14 +398,14 @@ func rebuildMemberList(sgName string, oldMembers []a10go.A10SGMember, be backend
 
 	// build service group member list
 	for _, m := range oldMembers {
-		if m.Name == be.BackendName {
+		if m.Name == backendName {
 			continue // exclude previous backend server ports from list
 		}
 		memberList = append(memberList, m.Name+","+m.Port) // keep other existing members
 	}
 
 	// append new ports for current backend server
-	for _, bsg := range be.ServiceGroups {
+	for _, bsg := range newGroups {
 		for _, bsgm := range bsg.Members {
 			memberList = append(memberList, bsgm.Name+","+bsgm.Port)
 		}
@@ -423,7 +424,7 @@ func backendLink(c *a10go.Client, w http.ResponseWriter, r *http.Request, be bac
 
 	for _, sg := range sgLinked {
 
-		memberList := rebuildMemberList(sg.Name, sg.Members, be)
+		memberList := rebuildMemberList(sg.Name, sg.Members, be.BackendName, be.ServiceGroups)
 
 		errUpdate := c.ServiceGroupUpdate(sg.Name, sg.Protocol, memberList)
 		if errUpdate != nil {
