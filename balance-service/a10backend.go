@@ -109,6 +109,7 @@ func sendBackendList(me string, w http.ResponseWriter, r *http.Request, tab map[
 	// force litter
 	query := r.URL.Query()
 	if _, found := query["debug"]; found {
+		w.Header().Set("Content-Type", "text/plain")
 		writeStr(me, w, litter.Sdump(list))
 		writeLine(me, w)
 		return
@@ -122,6 +123,7 @@ func sendBackendList(me string, w http.ResponseWriter, r *http.Request, tab map[
 			sendInternalError(me, w, r) // http 500
 			return
 		}
+		w.Header().Set("Content-Type", "text/x-yaml")
 		writeBuf(me, w, buf)
 		writeLine(me, w)
 		return
@@ -134,6 +136,7 @@ func sendBackendList(me string, w http.ResponseWriter, r *http.Request, tab map[
 		sendInternalError(me, w, r) // http 500
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
 	writeBuf(me, w, buf)
 	writeLine(me, w)
 }
