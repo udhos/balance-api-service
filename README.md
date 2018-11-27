@@ -7,6 +7,10 @@
     go test ./balance-service
     go install ./balance-service
 
+# Create certificate
+
+    $ openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout key.pem -out cert.pem
+
 # Example for A10 device
 
 See sample shell scripts in directory 'samples' for API recipes using 'curl'.

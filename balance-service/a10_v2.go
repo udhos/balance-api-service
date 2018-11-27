@@ -103,7 +103,7 @@ func handlerNodeA10v2(debug, dry bool, w http.ResponseWriter, r *http.Request, p
 
 	suffix := strings.TrimPrefix(r.URL.Path, path)
 
-	log.Printf(me+": method=%s url=%s from=%s suffix=[%s]", r.Method, r.URL.Path, r.RemoteAddr, suffix)
+	log.Printf(me+": TLS=%v method=%s url=%s from=%s suffix=[%s]", r.TLS != nil, r.Method, r.URL.Path, r.RemoteAddr, suffix)
 	forwarded(me, r)
 
 	fields := strings.FieldsFunc(suffix, func(r rune) bool { return r == '/' })

@@ -10,22 +10,27 @@ if [ -z "$NODE" ]; then
 	echo >&2 $0: forcing empty env var NODE="$NODE"
 fi
 
+if [ -z "$QUERY" ]; then
+	echo >&2 $0: missing empty env var QUERY
+fi
+
 if [ -z "$AUTH" ]; then
 	AUTH=admin:a10
 	echo >&2 $0: forcing empty env var AUTH="$AUTH"
 fi
 
 if [ -z "$URL" ]; then
-	URL="$BASE_URL"/at2/node/"$NODE"/backend
+	URL="$BASE_URL"/at2/node/"$NODE"/backend"$QUERY"
 	echo >&2 $0: forcing empty env var URL="$URL"
 fi
 
-cat <<__EOF__
+cat >&2 <<__EOF__
 
-BASE_URL and NODE are used only when URL is not set.
+BASE_URL, NODE, QUERY are used only when URL is not set.
 
 BASE_URL=$BASE_URL
 NODE=$NODE
+QUERY=$QUERY
 AUTH=$AUTH
 URL=$URL
 
