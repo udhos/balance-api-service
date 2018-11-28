@@ -88,9 +88,14 @@ LOOP:
 	return
 }
 
-// /v1/at/node/<host>/rule/
-// /v1/at/node/<host>/backend/
-// ^^^^^^^^^^^^
+// /v1/at2/healthcheck
+func handlerNodeA10v2Health(w http.ResponseWriter, r *http.Request, path string) {
+	writeStr("handlerNodeA10v2Health", w, "health ok\n")
+}
+
+// /v1/at2/node/<host>/rule/
+// /v1/at2/node/<host>/backend/
+// ^^^^^^^^^^^^^
 // prefix
 func handlerNodeA10v2(debug, dry bool, w http.ResponseWriter, r *http.Request, path string) {
 
@@ -136,6 +141,8 @@ func handlerNodeA10v2(debug, dry bool, w http.ResponseWriter, r *http.Request, p
 	*/
 	case "backend":
 		nodeA10v2Backend(debug, dry, w, r, username, password, fields)
+	case "healthcheck":
+		writeStr(me, w, "node health ok\n")
 	default:
 		reason := fmt.Sprintf("unexpected option field: [%s]", optionField)
 		sendBadRequest(me, reason, w, r)

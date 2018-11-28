@@ -69,6 +69,8 @@ func main() {
 
 	register("/v1/ff/node/", func(w http.ResponseWriter, r *http.Request) { handlerNodeF5(w, r, "/v1/ff/node/") })
 	register("/v1/at2/node/", func(w http.ResponseWriter, r *http.Request) { handlerNodeA10v2(debug, dry, w, r, "/v1/at2/node/") })
+	register("/v1/at2/healthcheck", func(w http.ResponseWriter, r *http.Request) { handlerNodeA10v2Health(w, r, "/v1/at2/healthcheck") })
+	register("/v1/at2/healthcheck/", func(w http.ResponseWriter, r *http.Request) { handlerNodeA10v2Health(w, r, "/v1/at2/healthcheck/") })
 	register("/v1/at3/node/", func(w http.ResponseWriter, r *http.Request) { handlerNodeA10v3(w, r, "/v1/at3/node/") })
 
 	if tls {
